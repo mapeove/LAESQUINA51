@@ -40,7 +40,7 @@ async function verifyDatabase() {
   let missingTables = [];
 
   for (const table of tables) {
-    const { data, error } = await supabaseAdmin.from(table).select('count', { count: 'exact', head: true });
+    const { error } = await supabaseAdmin.from(table).select('count', { count: 'exact', head: true });
     if (error) {
       console.log(`   [MISSING] Tabla '${table}' no encontrada: ${error.message}`);
       missingTables.push(table);
@@ -69,7 +69,7 @@ async function verifyDatabase() {
   console.log('\n3. Realizando prueba de creación de pedido real...');
   const testOrderNum = `E51-TEST-${Math.floor(1000 + Math.random() * 9000)}`;
 
-  const { data: newOrder, error: orderError } = await supabaseAdmin
+  const { error: orderError } = await supabaseAdmin
     .from('orders')
     .insert({
       order_number: testOrderNum,
