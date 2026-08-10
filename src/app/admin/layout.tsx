@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { AdminSidebar } from './components/AdminSidebar';
 import { createClient } from '@/lib/supabase/server';
 
@@ -10,9 +9,9 @@ export default async function AdminLayout({
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
-  // Middleware already redirects unauthenticated users, but double-check here
+  // If unauthenticated, render children directly (allows /admin/login to render cleanly without layout sidebar or loops)
   if (!session) {
-    redirect('/admin/login');
+    return <>{children}</>;
   }
 
   return (
