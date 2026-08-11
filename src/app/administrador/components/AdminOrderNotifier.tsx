@@ -25,8 +25,10 @@ export function AdminOrderNotifier() {
   useEffect(() => {
     const savedPref = localStorage.getItem('admin_order_sound_enabled');
     if (savedPref === 'true') {
-      setSoundEnabled(true);
-      setHasInteracted(true); // Assume prior interaction
+      setTimeout(() => {
+        setSoundEnabled(true);
+        setHasInteracted(true); // Assume prior interaction
+      }, 0);
     }
     audioRef.current = new Audio('/sounds/new-order.wav');
   }, []);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { X, MessageCircle, ChevronRight, Truck, Wallet } from 'lucide-react';
+import { X, MessageCircle, ChevronRight, Truck, Wallet, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type { Order, OrderStatus, DeliveryDriver } from '@/types';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/types';
@@ -125,6 +125,28 @@ function AdminOrdersContent() {
       setOrders(orders.map((o) => (o.id === selectedOrder.id ? updatedOrder : o)));
     }
     setUpdating(false);
+  };
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteOrder = async () => {
+    if (!selectedOrder) return;
+    setIsDeleting(true);
+
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', selectedOrder.id);
+
+    if (!error) {
+      setOrders(orders.filter((o) => o.id !== selectedOrder.id));
+      setSelectedOrder(null);
+      setShowDeleteConfirm(false);
+    } else {
+      console.error('Error deleting order:', error);
+    }
+    setIsDeleting(false);
   };
 
   const filteredOrders =
@@ -415,6 +437,41 @@ function AdminOrdersContent() {
                     {formatPrice(selectedOrder.total)}
                   </span>
                 </div>
+              </div>
+
+              {/* Destructive Action: Delete Order */}
+              <div className="mt-8 pt-6 border-t border-red-900/30">
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting}
+                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 rounded-xl text-sm font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                  >
+                    <Trash2 size={18} />
+                    <span>Borrar pedido</span>
+                  </button>
+                ) : (
+                  <div className="p-4 rounded-xl border border-red-900/50 bg-red-950/30 space-y-3">
+                    <p className="text-sm font-bold text-red-500">¿Eliminar definitivamente el pedido #{selectedOrder.order_number}?</p>
+                    <p className="text-xs text-red-400">Esta acción eliminará el pedido y sus datos asociados y no se puede deshacer.</p>
+                    <div className="flex space-x-3 pt-2">
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        disabled={isDeleting}
+                        className="flex-1 py-2 rounded-lg text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700"
+                      >
+                        CANCELAR
+                      </button>
+                      <button
+                        onClick={handleDeleteOrder}
+                        disabled={isDeleting}
+                        className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-red-600 hover:bg-red-500"
+                      >
+                        {isDeleting ? 'ELIMINANDO...' : 'ELIMINAR DEFINITIVAMENTE'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

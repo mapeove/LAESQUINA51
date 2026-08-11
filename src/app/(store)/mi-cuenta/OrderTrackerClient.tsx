@@ -8,6 +8,7 @@ import type { Order } from '@/types';
 
 export default function OrderTrackerClient({ order: initialOrder }: { order: Order }) {
   const [order, setOrder] = useState<Order>(initialOrder);
+  const [isDeleted, setIsDeleted] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -17,13 +18,17 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'orders',
           filter: `id=eq.${order.id}`,
         },
         (payload) => {
-          setOrder(payload.new as Order);
+          if (payload.eventType === 'DELETE') {
+            setIsDeleted(true);
+          } else if (payload.eventType === 'UPDATE') {
+            setOrder(payload.new as Order);
+          }
         }
       )
       .subscribe();
@@ -44,6 +49,18 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
   const currentStatus = (order.status === 'PENDING' || order.status === 'CONFIRMED') ? 'PREPARING' : order.status;
   const currentStageIndex = stages.findIndex(s => s.status === currentStatus);
   const activeIndex = currentStageIndex === -1 ? 0 : currentStageIndex;
+
+  if (isDeleted) {
+    return (
+      <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 text-center shadow-2xl animate-fade-up max-w-md mx-auto w-full flex flex-col items-center justify-center min-h-[300px]">
+        <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center text-red-500 mb-4">
+          <span className="text-3xl">❌</span>
+        </div>
+        <h2 className="text-xl font-bold font-mono text-white mb-2">Pedido no disponible</h2>
+        <p className="text-sm text-neutral-400">Este pedido ha sido eliminado y ya no está disponible en el sistema.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 rounded-2xl border bg-white shadow-sm" style={{ borderColor: '#E8D5A8' }}>
