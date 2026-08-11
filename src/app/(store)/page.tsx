@@ -5,6 +5,7 @@ import { Flame, ShoppingBag, MapPin, Clock, ArrowRight } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { PromoModal } from '@/components/promo/PromoModal';
 import { StickyCartBar } from '@/components/cart/StickyCartBar';
+import { InteractiveProductCard } from '@/components/home/InteractiveProductCard';
 import type { Product, Category, Campaign } from '@/types';
 
 export default async function HomePage() {
@@ -47,6 +48,11 @@ export default async function HomePage() {
   ];
 
   const featuredProducts = products.filter(p => p.featured);
+
+  const pCasiTriple = products.find(p => p.slug === 'la-casi-triple');
+  const pAmarreArabe = products.find(p => p.slug === 'el-amarre-arabe');
+  const pGhostesco = products.find(p => p.slug === 'el-ghostesco');
+  const pIncondicional = products.find(p => p.slug === 'la-incondicional');
 
   const storeOpenSetting = settingsData?.find(s => s.key === 'store_open');
   const isStoreOpen = storeOpenSetting ? storeOpenSetting.value === 'true' : true;
@@ -114,62 +120,10 @@ export default async function HomePage() {
           {/* Editorial Real Photography Collage */}
           <div className="w-full max-w-5xl pt-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              {/* Product 1: La Casi Triple */}
-              <div className="relative h-44 sm:h-56 md:h-64 rounded-2xl overflow-hidden shadow-md group" style={{ border: '2px solid #E8D5A8', backgroundColor: '#FFF7E5' }}>
-                <Image
-                  src="/images/products/la-casi-triple.jpg"
-                  alt="La Casi Triple - La Esquina 51"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  priority
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#3A2418]/80 via-transparent to-transparent flex items-end p-3">
-                  <span className="font-bold text-xs font-mono text-[#FFF7E5]">La Casi Triple · 8,50€</span>
-                </div>
-              </div>
-
-              {/* Product 2: El Amarre Árabe */}
-              <div className="relative h-44 sm:h-56 md:h-64 rounded-2xl overflow-hidden shadow-md group" style={{ border: '2px solid #E8D5A8', backgroundColor: '#FFF7E5' }}>
-                <Image
-                  src="/images/products/amarre-arabe.png"
-                  alt="El Amarre Árabe - La Esquina 51"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#3A2418]/80 via-transparent to-transparent flex items-end p-3">
-                  <span className="font-bold text-xs font-mono text-[#FFF7E5]">El Amarre Árabe · 9,00€</span>
-                </div>
-              </div>
-
-              {/* Product 3: El Ghostesco */}
-              <div className="relative h-44 sm:h-56 md:h-64 rounded-2xl overflow-hidden shadow-md group" style={{ border: '2px solid #E8D5A8', backgroundColor: '#FFF7E5' }}>
-                <Image
-                  src="/images/products/el-ghostesco.png"
-                  alt="El Ghostesco - La Esquina 51"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#3A2418]/80 via-transparent to-transparent flex items-end p-3">
-                  <span className="font-bold text-xs font-mono text-[#FFF7E5]">El Ghostesco</span>
-                </div>
-              </div>
-
-              {/* Product 4: Empanada Incondicional */}
-              <div className="relative h-44 sm:h-56 md:h-64 rounded-2xl overflow-hidden shadow-md group" style={{ border: '2px solid #E8D5A8', backgroundColor: '#FFF7E5' }}>
-                <Image
-                  src="/images/products/empanada-incondicional.png"
-                  alt="Empanada Incondicional - La Esquina 51"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#3A2418]/80 via-transparent to-transparent flex items-end p-3">
-                  <span className="font-bold text-xs font-mono text-[#FFF7E5]">La Incondicional · 3,50€</span>
-                </div>
-              </div>
+              {pCasiTriple && <InteractiveProductCard product={pCasiTriple} variant="collage" />}
+              {pAmarreArabe && <InteractiveProductCard product={pAmarreArabe} variant="collage" />}
+              {pGhostesco && <InteractiveProductCard product={pGhostesco} variant="collage" />}
+              {pIncondicional && <InteractiveProductCard product={pIncondicional} variant="collage" />}
             </div>
           </div>
         </div>
@@ -242,51 +196,9 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((prod) => {
-            const prodImg = prod.image_url || prod.image || '/images/products/la-casi-triple.jpg';
-            return (
-              <div key={prod.id} className="rounded-3xl border overflow-hidden flex flex-col justify-between shadow-sm group" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
-                <div className="relative w-full h-48 flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#F3E8CC' }}>
-                  <Image
-                    src={prodImg}
-                    alt={prod.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 768px) 100vw, 300px"
-                  />
-                  {prod.sold_out && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold font-mono uppercase rounded-full">
-                        AGOTADO
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    <h3 className="text-xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
-                      {prod.name}
-                    </h3>
-                    <p className="text-xs mt-1 line-clamp-2 leading-relaxed" style={{ color: '#65513F' }}>
-                      {prod.description}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: '#E8D5A8' }}>
-                    <span className="text-2xl font-bold font-mono" style={{ color: '#A94F2F' }}>{formatPrice(prod.price)}</span>
-                    <Link
-                      href="/menu"
-                      className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-transform active:scale-95"
-                      style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
-                    >
-                      AÑADIR
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {featuredProducts.map((prod) => (
+            <InteractiveProductCard key={prod.id} product={prod} variant="featured" />
+          ))}
         </div>
       </section>
 

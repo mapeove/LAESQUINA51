@@ -2,9 +2,9 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { useCart } from '@/features/cart/cart-context';
 import { formatPrice } from '@/lib/utils';
 import type { Category, Product } from '@/types';
+import { ProductModal } from './ProductModal';
 
 interface MenuClientProps {
   categories: Category[];
@@ -14,8 +14,6 @@ interface MenuClientProps {
 export default function MenuClient({ categories, products }: MenuClientProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.slug ?? '');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
-  const { addItem } = useCart();
 
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -31,23 +29,6 @@ export default function MenuClient({ categories, products }: MenuClientProps) {
   const openProduct = (product: Product) => {
     if (product.sold_out) return;
     setSelectedProduct(product);
-    setQuantity(1);
-  };
-
-  const handleAddToCart = () => {
-    if (!selectedProduct) return;
-    const prodImg = selectedProduct.image_url || selectedProduct.image || null;
-    addItem({
-      product_id: selectedProduct.id,
-      product_name: selectedProduct.name,
-      product_price: selectedProduct.price,
-      product_image: prodImg,
-      quantity,
-      selected_options: [],
-      selected_extras: [],
-      line_total: selectedProduct.price * quantity,
-    });
-    setSelectedProduct(null);
   };
 
   return (
@@ -185,93 +166,11 @@ export default function MenuClient({ categories, products }: MenuClientProps) {
         })}
       </div>
 
-      {/* Product Modal / Bottom Sheet */}
       {selectedProduct && (
-        <div
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/70 backdrop-blur-sm animate-fade-up"
-          onClick={() => setSelectedProduct(null)}
-        >
-          <div
-            className="w-full md:max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92dvh] border"
-            style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Product image header */}
-            <div className="relative h-48 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#F3E8CC' }}>
-              {(selectedProduct.image_url || selectedProduct.image) ? (
-                <Image
-                  src={selectedProduct.image_url || selectedProduct.image!}
-                  alt={selectedProduct.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 448px"
-                />
-              ) : (
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#A94F2F" strokeWidth="1" className="opacity-60">
-                  <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
-                  <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-                  <line x1="6" y1="1" x2="6" y2="4" />
-                  <line x1="10" y1="1" x2="10" y2="4" />
-                  <line x1="14" y1="1" x2="14" y2="4" />
-                </svg>
-              )}
-              <button
-                onClick={() => setSelectedProduct(null)}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow"
-                style={{ backgroundColor: 'rgba(58,36,24,0.7)', color: '#FFF7E5' }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-5 overflow-y-auto flex-1">
-              <h2
-                className="text-2xl font-bold mb-1 uppercase"
-                style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}
-              >
-                {selectedProduct.name}
-              </h2>
-              <p className="text-sm leading-relaxed mb-5" style={{ color: '#65513F' }}>
-                {selectedProduct.description}
-              </p>
-            </div>
-
-            {/* Footer */}
-            <div className="p-5 border-t flex flex-col gap-4 safe-bottom" style={{ backgroundColor: '#F3E8CC', borderColor: '#E8D5A8' }}>
-              {/* Quantity */}
-              <div className="flex items-center justify-center gap-5">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 rounded-full border flex items-center justify-center text-xl font-bold transition-colors"
-                  style={{ backgroundColor: '#FFF7E5', borderColor: '#D4C4A0', color: '#3A2418' }}
-                >
-                  −
-                </button>
-                <span className="text-xl font-bold font-mono w-8 text-center" style={{ color: '#3A2418' }}>{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-transform active:scale-90 shadow-sm"
-                  style={{ backgroundColor: '#B88727', color: '#FFF7E5' }}
-                >
-                  +
-                </button>
-              </div>
-
-              <button
-                onClick={handleAddToCart}
-                className="w-full py-4 rounded-xl font-bold text-base flex items-center justify-between px-5 transition-transform active:scale-98 shadow-md uppercase"
-                style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}
-              >
-                <span>AÑADIR AL CARRITO</span>
-                <span className="font-mono">{formatPrice(selectedProduct.price * quantity)}</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <ProductModal 
+          product={selectedProduct} 
+          onClose={() => setSelectedProduct(null)} 
+        />
       )}
     </div>
   );

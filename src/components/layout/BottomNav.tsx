@@ -13,8 +13,8 @@ export function BottomNav() {
     { name: 'Inicio', href: '/', icon: Home },
     { name: 'Menú', href: '/menu', icon: UtensilsCrossed },
     { name: 'Pedido', href: '/cart', icon: ShoppingCart, badge: totalItems },
-    { name: 'Pedidos', href: '/orders', icon: ClipboardList },
-    { name: 'Perfil', href: '/profile', icon: User },
+    { name: 'Pedidos', href: '/mi-cuenta', icon: ClipboardList },
+    { name: 'Mi Cuenta', href: '/mi-cuenta', icon: User },
   ];
 
   return (

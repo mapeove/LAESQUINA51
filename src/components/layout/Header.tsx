@@ -12,8 +12,8 @@ export function Header() {
   const navLinks = [
     { name: 'Inicio', href: '/' },
     { name: 'Menú', href: '/menu' },
-    { name: 'Mis Pedidos', href: '/orders' },
-    { name: 'Perfil', href: '/profile' },
+    { name: 'Mis Pedidos', href: '/mi-cuenta' },
+    { name: 'Mi Cuenta', href: '/mi-cuenta' },
   ];
 
   return (

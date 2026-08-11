@@ -43,6 +43,20 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      {
+        source: '/profile',
+        destination: '/mi-cuenta',
+        permanent: true,
+      },
+      {
+        source: '/orders',
+        destination: '/mi-cuenta',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 export default nextConfig
