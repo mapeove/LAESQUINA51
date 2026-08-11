@@ -18,6 +18,7 @@ interface OrderRequestBody {
   subtotal: number;
   delivery_fee: number;
   total: number;
+  user_id?: string | null;
 }
 
 export async function POST(request: Request) {
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
         customer_name,
         customer_phone: cleanPhone,
         customer_email: customer_email ?? null,
+        user_id: body.user_id ?? null,
         delivery_address: fullAddress,
         delivery_floor: delivery_floor ?? null,
         delivery_door: delivery_door ?? null,

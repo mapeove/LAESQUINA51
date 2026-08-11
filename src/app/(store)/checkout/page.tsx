@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCart } from '@/features/cart/cart-context';
 import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
-import { Banknote, Wallet, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Banknote, Wallet, ArrowLeft, ShieldCheck, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
@@ -14,8 +14,10 @@ export default function CheckoutPage() {
   const supabase = createClient();
 
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState('');
   const [bizumPhone, setBizumPhone] = useState('34633184354');
+  const [userId, setUserId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -33,22 +35,72 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     let ignore = false;
-    async function loadBizumPhone() {
-      const { data } = await supabase
-        .from('store_settings')
-        .select('value')
-        .eq('key', 'bizum_phone')
-        .single();
+    
+    async function initCheckout() {
+      // 1. Check Auth
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Redirigir si no hay sesión (checkout obligatorio con usuario autenticado)
+        router.push('/login');
+        return;
+      }
+      
+      if (!ignore) {
+        setUserId(session.user.id);
+        
+        // 2. Load Profile Data for Prefill
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, phone')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (profile) {
+          setFormData(prev => ({
+            ...prev,
+            customer_name: profile.full_name || '',
+            customer_phone: profile.phone || '',
+            customer_email: session.user.email || '',
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            customer_email: session.user.email || '',
+          }));
+        }
 
-      if (!ignore && data?.value) {
-        setBizumPhone(data.value);
+        // 3. Load Bizum Phone
+        const { data: settingsData } = await supabase
+          .from('store_settings')
+          .select('value')
+          .eq('key', 'bizum_phone')
+          .single();
+
+        if (settingsData?.value) {
+          setBizumPhone(settingsData.value);
+        }
+        
+        setCheckingAuth(false);
       }
     }
-    void loadBizumPhone();
+    
+    void initCheckout();
+    
     return () => {
       ignore = true;
     };
-  }, [supabase]);
+  }, [supabase, router]);
+
+  if (checkingAuth) {
+    return (
+      <div className="px-4 py-16 max-w-lg mx-auto text-center min-h-[60vh] flex flex-col items-center justify-center">
+        <h1 className="text-3xl font-bold uppercase mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
+          VERIFICANDO ACCESO...
+        </h1>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -87,6 +139,7 @@ export default function CheckoutPage() {
     try {
       const payload = {
         ...formData,
+        user_id: userId,
         items,
         subtotal,
         delivery_fee: deliveryFee,
@@ -107,7 +160,7 @@ export default function CheckoutPage() {
       }
 
       clearCart();
-      router.push(`/orders/${data.orderNumber}`);
+      router.push(`/mi-cuenta`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Ha ocurrido un error inesperado';
       setError(message);
@@ -130,6 +183,13 @@ export default function CheckoutPage() {
       >
         FINALIZAR PEDIDO
       </h1>
+      
+      <div className="mb-6 p-4 rounded-xl bg-orange-50 border border-orange-100 flex items-center gap-3">
+        <UserCircle className="w-6 h-6 text-orange-800" />
+        <span className="text-sm font-bold font-mono text-orange-900">
+          Hola {formData.customer_name.split(' ')[0]}, verifica tus datos para el envío.
+        </span>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Sección 1: Datos Personales */}
@@ -170,10 +230,10 @@ export default function CheckoutPage() {
                 <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Email (Opcional)</label>
                 <input
                   type="email"
+                  disabled
                   value={formData.customer_email}
-                  onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
                   placeholder="juan@ejemplo.com"
-                  className="w-full p-3 rounded-xl text-sm focus:outline-none"
+                  className="w-full p-3 rounded-xl text-sm focus:outline-none opacity-60"
                   style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 />
               </div>
