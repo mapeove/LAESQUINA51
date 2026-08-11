@@ -4,9 +4,14 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Permanent redirect for legacy /admin or uppercase /Administrador routes
-  if (pathname.startsWith('/admin') || pathname.startsWith('/Administrador')) {
-    const targetPath = pathname.replace(/^\/(admin|Administrador)/, '/administrador');
+  // 1. Permanent redirect for legacy /admin or /Administrador (strict boundary check)
+  if (
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/') ||
+    pathname === '/Administrador' ||
+    pathname.startsWith('/Administrador/')
+  ) {
+    const targetPath = pathname.replace(/^\/(admin|Administrador)(\/|$)/, '/administrador$2');
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = targetPath;
     return NextResponse.redirect(redirectUrl, { status: 301 });
