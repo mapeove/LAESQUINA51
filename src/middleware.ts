@@ -4,22 +4,30 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Instantly pass public routes and admin login
+  // 1. Permanent redirect for legacy /admin or uppercase /Administrador routes
+  if (pathname.startsWith('/admin') || pathname.startsWith('/Administrador')) {
+    const targetPath = pathname.replace(/^\/(admin|Administrador)/, '/administrador');
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = targetPath;
+    return NextResponse.redirect(redirectUrl, { status: 301 });
+  }
+
+  // 2. Instantly pass public routes and admin login
   if (
-    !pathname.startsWith('/admin') ||
-    pathname.startsWith('/admin/login')
+    !pathname.startsWith('/administrador') ||
+    pathname.startsWith('/administrador/login')
   ) {
     return NextResponse.next();
   }
 
-  // 2. Fail-safe protection for /admin routes
+  // 3. Fail-safe protection for /administrador routes
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
       const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = '/admin/login';
+      loginUrl.pathname = '/administrador/login';
       return NextResponse.redirect(loginUrl);
     }
 
@@ -45,19 +53,32 @@ export async function middleware(request: NextRequest) {
 
     if (!user) {
       const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = '/admin/login';
+      loginUrl.pathname = '/administrador/login';
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Verify user is in admin_users table
+    const { data: adminRecord } = await supabase
+      .from('admin_users')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!adminRecord) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/administrador/login';
       return NextResponse.redirect(loginUrl);
     }
 
     return supabaseResponse;
   } catch (err: unknown) {
-    console.error('[Middleware Error] Admin auth check failed:', err);
+    console.error('[Middleware Error] Administrador auth check failed:', err);
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/admin/login';
+    loginUrl.pathname = '/administrador/login';
     return NextResponse.redirect(loginUrl);
   }
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/Administrador/:path*', '/administrador/:path*'],
 };

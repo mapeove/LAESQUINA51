@@ -12,6 +12,8 @@ interface OrderRequestBody {
   delivery_floor?: string;
   delivery_door?: string;
   notes?: string;
+  payment_method: 'CASH' | 'BIZUM';
+  cash_change_for?: number | null;
   items: CartItem[];
   subtotal: number;
   delivery_fee: number;
@@ -31,6 +33,8 @@ export async function POST(request: Request) {
       delivery_floor,
       delivery_door,
       notes,
+      payment_method,
+      cash_change_for,
       items,
       subtotal,
       delivery_fee,
@@ -39,14 +43,16 @@ export async function POST(request: Request) {
 
     // Validate required fields
     if (!customer_name || !customer_phone || !delivery_address || !delivery_postal_code || !delivery_zone || !items || items.length === 0) {
-      return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 });
+      return NextResponse.json({ error: 'Faltan campos requeridos para el pedido' }, { status: 400 });
     }
+
+    const cleanPhone = customer_phone.replace(/\s+/g, '');
 
     let supabase;
     try {
       supabase = await createAdminClient();
     } catch {
-      // Dev mode: Supabase not configured yet
+      // Dev fallback mode
       console.warn('Supabase not configured, using mock order');
       const mockNumber = `E51-${String(Math.floor(1000 + Math.random() * 9000)).padStart(6, '0')}`;
       return NextResponse.json({ success: true, orderNumber: mockNumber });
@@ -77,7 +83,7 @@ export async function POST(request: Request) {
         order_number: orderNumber,
         status: 'PENDING',
         customer_name,
-        customer_phone,
+        customer_phone: cleanPhone,
         customer_email: customer_email ?? null,
         delivery_address: fullAddress,
         delivery_floor: delivery_floor ?? null,
@@ -87,7 +93,8 @@ export async function POST(request: Request) {
         delivery_fee,
         total,
         notes: notes ?? null,
-        payment_method: 'CASH',
+        payment_method: payment_method || 'CASH',
+        cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,
       })
       .select()
       .single();

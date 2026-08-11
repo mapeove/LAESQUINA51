@@ -23,6 +23,16 @@ export interface OpeningHour {
   active: boolean
 }
 
+export interface SpecialOpeningHour {
+  id: string
+  special_date: string // "YYYY-MM-DD"
+  open_time: string
+  close_time: string
+  is_closed: boolean
+  notes: string | null
+  created_at: string
+}
+
 // ---- Delivery Zones ----------------------------------------
 
 export interface DeliveryZone {
@@ -32,6 +42,37 @@ export interface DeliveryZone {
   active: boolean
   delivery_fee: number
   min_order: number
+}
+
+// ---- Delivery Drivers --------------------------------------
+
+export interface DeliveryDriver {
+  id: string
+  name: string
+  phone: string
+  vehicle_type: string
+  notes: string | null
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
+// ---- Promotions --------------------------------------------
+
+export interface Promotion {
+  id: string
+  title: string
+  subtitle: string | null
+  product_id: string | null
+  image_url: string | null
+  promo_price: number | null
+  active: boolean
+  show_modal: boolean
+  show_home: boolean
+  start_date: string | null
+  end_date: string | null
+  created_at: string
+  product?: Product
 }
 
 // ---- Categories --------------------------------------------
@@ -63,7 +104,6 @@ export interface Product {
   sold_out: boolean
   created_at: string
   updated_at: string
-  // Relations (optional, loaded on demand)
   category?: Category
   option_groups?: ProductOptionGroup[]
   extras?: ProductExtra[]
@@ -111,7 +151,7 @@ export interface CartItemExtra {
 }
 
 export interface CartItem {
-  cart_item_id: string // unique per cart line (uuid)
+  cart_item_id: string
   product_id: string
   product_name: string
   product_price: number
@@ -138,19 +178,19 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   CONFIRMED: 'Confirmado',
   PREPARING: 'Preparando',
   READY: 'Listo',
-  OUT_FOR_DELIVERY: 'En camino',
+  OUT_FOR_DELIVERY: 'En reparto',
   DELIVERED: 'Entregado',
   CANCELLED: 'Cancelado',
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  PENDING: 'bg-yellow-500',
-  CONFIRMED: 'bg-blue-500',
-  PREPARING: 'bg-orange-500',
-  READY: 'bg-green-400',
-  OUT_FOR_DELIVERY: 'bg-purple-500',
-  DELIVERED: 'bg-green-600',
-  CANCELLED: 'bg-red-600',
+  PENDING: 'bg-yellow-500 text-black',
+  CONFIRMED: 'bg-blue-500 text-white',
+  PREPARING: 'bg-orange-500 text-white',
+  READY: 'bg-green-400 text-black',
+  OUT_FOR_DELIVERY: 'bg-purple-500 text-white',
+  DELIVERED: 'bg-green-600 text-white',
+  CANCELLED: 'bg-red-600 text-white',
 }
 
 export interface OrderItemSnapshot {
@@ -179,7 +219,10 @@ export interface Order {
   delivery_fee: number
   total: number
   notes: string | null
-  payment_method: string
+  payment_method: 'CASH' | 'BIZUM' | string
+  cash_change_for?: number | null
+  driver_id?: string | null
+  driver?: DeliveryDriver
   created_at: string
   updated_at: string
   items?: OrderItemSnapshot[]
@@ -197,6 +240,8 @@ export interface CheckoutFormData {
   delivery_floor: string
   delivery_door: string
   notes: string
+  payment_method: 'CASH' | 'BIZUM'
+  cash_change_for?: string
 }
 
 // ---- Auth / Admin ------------------------------------------
@@ -220,6 +265,6 @@ export interface AdminUser {
 
 export interface StoreState {
   is_open: boolean
-  next_opening: string | null // ISO datetime or null
+  next_opening: string | null
   message: string | null
 }
