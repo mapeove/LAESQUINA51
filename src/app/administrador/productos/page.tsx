@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Edit2, Trash2, X, UtensilsCrossed } from 'lucide-react';
+import { MediaUpload } from './MediaUpload';
 
 interface Product {
   id: string;
@@ -14,6 +15,7 @@ interface Product {
   price: number;
   image: string | null;
   image_url?: string | null;
+  secondary_image_url?: string | null;
   video_url?: string | null;
   active: boolean;
   featured: boolean;
@@ -39,6 +41,7 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -49,6 +52,7 @@ export default function AdminProductsPage() {
     category_id: '',
     image: '',
     image_url: '',
+    secondary_image_url: '',
     video_url: '',
     active: true,
     featured: false,
@@ -131,6 +135,7 @@ export default function AdminProductsPage() {
         category_id: product.category_id || (categories.length > 0 ? categories[0].id : ''),
         image: product.image || '',
         image_url: product.image_url || '',
+        secondary_image_url: product.secondary_image_url || '',
         video_url: product.video_url || '',
         active: product.active ?? true,
         featured: product.featured ?? false,
@@ -148,6 +153,7 @@ export default function AdminProductsPage() {
         category_id: categories.length > 0 ? categories[0].id : '',
         image: '',
         image_url: '',
+        secondary_image_url: '',
         video_url: '',
         active: true,
         featured: false,
@@ -399,7 +405,7 @@ export default function AdminProductsPage() {
 
                 {/* Details */}
                 <div className="space-y-2">
-                  <label className="text-sm text-neutral-400 uppercase font-mono">Precio (USD) *</label>
+                  <label className="text-sm text-neutral-400 uppercase font-mono">Precio (€) *</label>
                   <input 
                     type="number" 
                     name="price"
@@ -428,39 +434,35 @@ export default function AdminProductsPage() {
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-400 uppercase font-mono">URL Imagen</label>
-                  <input 
-                    type="url" 
-                    name="image"
-                    value={formData.image}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white focus:border-yellow-500 focus:outline-none"
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-neutral-800">
+                  <MediaUpload
+                    label="Imagen Principal"
+                    type="image"
+                    currentUrl={formData.image_url || formData.image || ''}
+                    onUploadSuccess={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                    onRemove={() => setFormData(prev => ({ ...prev, image_url: '', image: '' }))}
+                    isUploading={isUploadingMedia}
+                    setIsUploading={setIsUploadingMedia}
                   />
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-400 uppercase font-mono">URL Imagen Alternativa</label>
-                  <input 
-                    type="url" 
-                    name="image_url"
-                    value={formData.image_url}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white focus:border-yellow-500 focus:outline-none"
+                  <MediaUpload
+                    label="Imagen Secundaria"
+                    type="image"
+                    currentUrl={formData.secondary_image_url || ''}
+                    onUploadSuccess={(url) => setFormData(prev => ({ ...prev, secondary_image_url: url }))}
+                    onRemove={() => setFormData(prev => ({ ...prev, secondary_image_url: '' }))}
+                    isUploading={isUploadingMedia}
+                    setIsUploading={setIsUploadingMedia}
                   />
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-400 uppercase font-mono">URL Video</label>
-                  <input 
-                    type="url" 
-                    name="video_url"
-                    value={formData.video_url}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white focus:border-yellow-500 focus:outline-none"
+                  <MediaUpload
+                    label="Video del Producto"
+                    type="video"
+                    currentUrl={formData.video_url || ''}
+                    onUploadSuccess={(url) => setFormData(prev => ({ ...prev, video_url: url }))}
+                    onRemove={() => setFormData(prev => ({ ...prev, video_url: '' }))}
+                    isUploading={isUploadingMedia}
+                    setIsUploading={setIsUploadingMedia}
                   />
                 </div>
 
@@ -523,9 +525,10 @@ export default function AdminProductsPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-6 py-2 rounded font-bold bg-yellow-500 hover:bg-yellow-600 text-neutral-900 transition-colors"
+                  disabled={isUploadingMedia}
+                  className="px-6 py-2 rounded font-bold bg-yellow-500 hover:bg-yellow-600 text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Guardar Producto
+                  {isUploadingMedia ? 'Subiendo...' : 'Guardar Producto'}
                 </button>
               </div>
             </form>
