@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/types';
-import { Package, ChefHat, CheckCircle, Bike, Home } from 'lucide-react';
+import { ChefHat, CheckCircle, Bike, Home } from 'lucide-react';
 import type { Order } from '@/types';
 
 export default function OrderTrackerClient({ order: initialOrder }: { order: Order }) {
@@ -34,15 +34,14 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
   }, [order.id, supabase]);
 
   const stages = [
-    { status: 'PENDING', label: 'Recibido', icon: Package },
-    { status: 'PREPARING', label: 'Cocina', icon: ChefHat },
-    { status: 'READY', label: 'Listo', icon: CheckCircle },
-    { status: 'OUT_FOR_DELIVERY', label: 'Camino', icon: Bike },
-    { status: 'DELIVERED', label: 'Entregado', icon: Home },
+    { status: 'PREPARING', label: 'Preparando', message: 'Estamos preparando tu pedido', icon: ChefHat },
+    { status: 'READY', label: 'Listo', message: 'Tu pedido está listo', icon: CheckCircle },
+    { status: 'OUT_FOR_DELIVERY', label: 'Camino', message: '🛵 Tu pedido va en camino', icon: Bike },
+    { status: 'DELIVERED', label: 'Entregado', message: '🏠 ¡Hemos llegado!', icon: Home },
   ];
 
-  // CONFIRMED maps to PENDING for the tracker visual
-  const currentStatus = order.status === 'CONFIRMED' ? 'PENDING' : order.status;
+  // CONFIRMED and PENDING map to PREPARING for the tracker visual
+  const currentStatus = (order.status === 'PENDING' || order.status === 'CONFIRMED') ? 'PREPARING' : order.status;
   const currentStageIndex = stages.findIndex(s => s.status === currentStatus);
   const activeIndex = currentStageIndex === -1 ? 0 : currentStageIndex;
 
@@ -101,19 +100,27 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
         </div>
       </div>
       
-      {order.status === 'OUT_FOR_DELIVERY' && order.driver && (
-        <div className="mt-6 p-4 rounded-xl bg-orange-50 border border-orange-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-            <Bike className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-sm font-bold uppercase text-orange-900" style={{ fontFamily: 'Oswald, sans-serif' }}>
-              Tu pedido va en camino
-            </p>
-            <p className="text-xs text-orange-700">Repartidor: {order.driver.name}</p>
-          </div>
+      {/* Status Message */}
+      <div className="mt-6 p-4 rounded-xl bg-orange-50 border border-orange-100 flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+          {order.status === 'CANCELLED' ? (
+            <span className="text-xl">❌</span>
+          ) : (
+            (() => {
+              const Icon = stages[activeIndex]?.icon;
+              return Icon ? <Icon className="w-6 h-6" /> : null;
+            })()
+          )}
         </div>
-      )}
+        <div>
+          <p className="text-sm font-bold uppercase text-orange-900" style={{ fontFamily: 'Oswald, sans-serif' }}>
+            {order.status === 'CANCELLED' ? 'Pedido cancelado' : stages[activeIndex]?.message}
+          </p>
+          {order.status === 'OUT_FOR_DELIVERY' && order.driver && (
+            <p className="text-xs text-orange-700 mt-1">Repartidor: {order.driver.name}</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

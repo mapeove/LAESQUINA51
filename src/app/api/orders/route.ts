@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       .from('orders')
       .insert({
         order_number: orderNumber,
-        status: 'PENDING',
+        status: 'PREPARING',
         customer_name,
         customer_phone: cleanPhone,
         customer_email: customer_email ?? null,

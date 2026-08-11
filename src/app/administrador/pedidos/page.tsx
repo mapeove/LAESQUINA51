@@ -10,9 +10,8 @@ import { formatPrice } from '@/lib/utils';
 
 const TABS: { id: string; label: string }[] = [
   { id: 'ALL', label: 'Todos' },
-  { id: 'PENDING', label: 'Pendientes' },
-  { id: 'CONFIRMED', label: 'Confirmados' },
   { id: 'PREPARING', label: 'Preparando' },
+  { id: 'READY', label: 'Listo' },
   { id: 'OUT_FOR_DELIVERY', label: 'En reparto' },
   { id: 'DELIVERED', label: 'Entregados' },
   { id: 'CANCELLED', label: 'Cancelados' },
@@ -25,6 +24,7 @@ function AdminOrdersContent() {
   const [activeTab, setActiveTab] = useState('ALL');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -66,9 +66,25 @@ function AdminOrdersContent() {
       void loadOrdersAndDrivers();
     }, 30000);
 
+    const handleNewOrder = (e: Event) => {
+      const customEvent = e as CustomEvent<Order>;
+      const newOrder = customEvent.detail;
+      setOrders(prev => {
+        if (prev.find(o => o.id === newOrder.id)) return prev;
+        return [newOrder, ...prev];
+      });
+      setHighlightedOrderId(newOrder.id);
+      setTimeout(() => {
+        setHighlightedOrderId(null);
+      }, 5000);
+    };
+
+    window.addEventListener('new-admin-order', handleNewOrder);
+
     return () => {
       ignore = true;
       clearInterval(interval);
+      window.removeEventListener('new-admin-order', handleNewOrder);
     };
   }, [supabase, searchParams]);
 
@@ -116,12 +132,27 @@ function AdminOrdersContent() {
       ? orders
       : orders.filter((o) => o.status === activeTab);
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const ordersToday = orders.filter(o => new Date(o.created_at) >= today).length;
+  const activeOrders = orders.filter(o => o.status === 'PREPARING').length;
+
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto flex h-[calc(100vh-64px)] md:h-screen flex-col text-white animate-fade-up">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold font-mono" style={{ color: 'var(--brand-cream)' }}>
           Gestión de Pedidos
         </h1>
+        <div className="flex gap-3">
+          <div className="px-4 py-2 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center gap-3">
+            <span className="text-xs uppercase font-bold text-neutral-400">Hoy</span>
+            <span className="text-lg font-mono font-bold text-white">{ordersToday}</span>
+          </div>
+          <div className="px-4 py-2 rounded-xl bg-orange-900/20 border border-orange-900/50 flex items-center gap-3">
+            <span className="text-xs uppercase font-bold text-orange-500">Preparando</span>
+            <span className="text-lg font-mono font-bold text-orange-400">{activeOrders}</span>
+          </div>
+        </div>
       </div>
 
       {/* Filter Tabs */}
@@ -175,12 +206,19 @@ function AdminOrdersContent() {
                   <tr
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
-                    className={`hover:bg-neutral-800/50 cursor-pointer border-b border-neutral-800 transition-colors ${
+                    className={`hover:bg-neutral-800/50 cursor-pointer border-b border-neutral-800 transition-colors duration-500 ${
                       selectedOrder?.id === order.id ? 'bg-neutral-800/80' : ''
+                    } ${
+                      highlightedOrderId === order.id ? 'bg-orange-900/40 border-orange-500/50' : ''
                     }`}
                   >
-                    <td className="px-6 py-4 font-mono font-bold text-yellow-500">
+                    <td className="px-6 py-4 font-mono font-bold text-yellow-500 flex items-center gap-2">
                       #{order.order_number}
+                      {highlightedOrderId === order.id && (
+                        <span className="px-1.5 py-0.5 bg-orange-600 text-white text-[9px] rounded-sm font-sans uppercase animate-pulse">
+                          Nuevo
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-xs text-neutral-400">
                       {new Date(order.created_at).toLocaleString('es-ES', {
@@ -266,9 +304,9 @@ function AdminOrdersContent() {
                   disabled={updating}
                   className="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-yellow-500 text-sm"
                 >
-                  {Object.entries(ORDER_STATUS_LABELS).map(([key, label]) => (
+                  {Array.from(new Set([selectedOrder.status, 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'])).map((key) => (
                     <option key={key} value={key}>
-                      {label}
+                      {ORDER_STATUS_LABELS[key as OrderStatus] || key}
                     </option>
                   ))}
                 </select>

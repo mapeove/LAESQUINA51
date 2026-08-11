@@ -18,6 +18,7 @@ import {
   X 
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { AdminOrderNotifier } from './AdminOrderNotifier';
 
 const links = [
   { name: 'Dashboard', href: '/administrador', icon: LayoutDashboard },
@@ -104,9 +105,11 @@ export function AdminSidebar() {
         </div>
 
         <div className="p-3 border-t" style={{ borderColor: '#65513F' }}>
+          <AdminOrderNotifier />
+          
           <button
             onClick={handleLogout}
-            className="flex items-center space-x-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center space-x-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors mt-2"
             style={{ color: '#A94F2F' }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(169,79,47,0.15)'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
