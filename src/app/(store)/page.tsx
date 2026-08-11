@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Flame, ShoppingBag, MapPin, Clock, ArrowRight, Star } from 'lucide-react';
+import { Flame, ShoppingBag, MapPin, Clock, ArrowRight } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { PromoModal } from '@/components/promo/PromoModal';
 import { StickyCartBar } from '@/components/cart/StickyCartBar';
@@ -29,7 +29,7 @@ export default async function HomePage() {
 
   const activeCampaign: Campaign | null = (promoData && promoData[0]) ? promoData[0] as Campaign : null;
 
-  // Fallback fallback categories & products if DB empty
+  // Fallback categories & products if DB empty
   const categories: Category[] = (categoriesData && categoriesData.length > 0) ? categoriesData : [
     { id: 'cat-1', name: 'HAMBURGUESAS VIRALES', slug: 'hamburguesas', description: 'Carne vacuno premium y papas hilo', image: null, active: true, sort_order: 1, created_at: '' },
     { id: 'cat-2', name: 'BOX TENDENCIA', slug: 'box', description: '5 mini burgers + patatas + Coca-Cola', image: null, active: true, sort_order: 2, created_at: '' },
@@ -39,21 +39,20 @@ export default async function HomePage() {
   ];
 
   const products: Product[] = (productsData && productsData.length > 0) ? productsData : [
-    { id: 'p1', category_id: 'cat-1', name: 'La Casi Triple', slug: 'la-casi-triple', description: 'Carne vacuno premium, huevo frito, cebolla caramelizada, papas hilo, guasacaca. Combo: patatas + Coca-Cola.', price: 8.50, image: null, active: true, featured: true, sort_order: 1, sold_out: false, created_at: '', updated_at: '' },
-    { id: 'p2', category_id: 'cat-2', name: 'El Box Mini-Monster', slug: 'el-box-mini-monster', description: '5 mini hamburguesas de vacuno premium con bacon o cheddar + patatas fritas + salsas + 1 Coca-Cola.', price: 10.50, image: null, active: true, featured: true, sort_order: 2, sold_out: false, created_at: '', updated_at: '' },
-    { id: 'p3', category_id: 'cat-3', name: 'El Amarre Árabe', slug: 'el-amarre-arabe', description: 'Pan árabe con carne, pollo o mixto, jamón, queso fundido, crema de berenjena y hummus. Incluye Coca-Cola.', price: 9.00, image: null, active: true, featured: true, sort_order: 3, sold_out: false, created_at: '', updated_at: '' },
-    { id: 'p4', category_id: 'cat-4', name: 'Perro-Shawarma', slug: 'perro-shawarma', description: 'Pan jumbo, 1 salchicha grande, carne o pollo de shawarma, ensalada de repollo, cilantro y papitas hilo.', price: 5.50, image: null, active: true, featured: true, sort_order: 4, sold_out: false, created_at: '', updated_at: '' },
-    { id: 'p5', category_id: 'cat-5', name: 'La Maracucha Tóxica', slug: 'la-maracucha-toxica', description: 'Empanada crujiente de carne mechada y queso amarillo con guasacaca especial. Incluye Coca-Cola.', price: 4.50, image: null, active: true, featured: false, sort_order: 5, sold_out: false, created_at: '', updated_at: '' },
+    { id: 'p1', category_id: 'cat-1', name: 'La Casi Triple', slug: 'la-casi-triple', description: 'Carne vacuno premium, huevo frito, cebolla caramelizada, papas hilo, guasacaca. Combo: patatas + Coca-Cola.', price: 8.50, image_url: '/images/products/la-casi-triple.jpg', image: '/images/products/la-casi-triple.jpg', active: true, featured: true, sort_order: 1, sold_out: false, created_at: '', updated_at: '' },
+    { id: 'p2', category_id: 'cat-2', name: 'El Box Mini-Monster', slug: 'el-box-mini-monster', description: '5 mini hamburguesas de vacuno premium con bacon o cheddar + patatas fritas + salsas + 1 Coca-Cola.', price: 10.50, image_url: '/images/products/box-mini-monster.png', image: '/images/products/box-mini-monster.png', active: true, featured: true, sort_order: 2, sold_out: false, created_at: '', updated_at: '' },
+    { id: 'p3', category_id: 'cat-3', name: 'El Amarre Árabe', slug: 'el-amarre-arabe', description: 'Pan árabe con carne, pollo o mixto, jamón, queso fundido, crema de berenjena y hummus. Incluye Coca-Cola.', price: 9.00, image_url: '/images/products/amarre-arabe.png', image: '/images/products/amarre-arabe.png', active: true, featured: true, sort_order: 3, sold_out: false, created_at: '', updated_at: '' },
+    { id: 'p4', category_id: 'cat-4', name: 'Perro-Shawarma', slug: 'perro-shawarma', description: 'Pan jumbo, 1 salchicha grande, carne o pollo de shawarma, ensalada de repollo, cilantro y papitas hilo.', price: 5.50, image_url: '/images/products/chikiturri.png', image: '/images/products/chikiturri.png', active: true, featured: true, sort_order: 4, sold_out: false, created_at: '', updated_at: '' },
+    { id: 'p5', category_id: 'cat-5', name: 'La Maracucha Tóxica', slug: 'la-maracucha-toxica', description: 'Empanada crujiente de carne mechada y queso amarillo con guasacaca especial. Incluye Coca-Cola.', price: 4.50, image_url: '/images/products/empanada-incondicional.png', image: '/images/products/empanada-incondicional.png', active: true, featured: false, sort_order: 5, sold_out: false, created_at: '', updated_at: '' },
   ];
 
   const featuredProducts = products.filter(p => p.featured);
-  const promoProduct = activeCampaign?.product_id ? products.find(p => p.id === activeCampaign.product_id) : products.find(p => p.slug === 'el-box-mini-monster');
 
   const storeOpenSetting = settingsData?.find(s => s.key === 'store_open');
   const isStoreOpen = storeOpenSetting ? storeOpenSetting.value === 'true' : true;
 
   return (
-    <main className="min-h-screen pb-24 text-white bg-[#0A0A0A] font-sans selection:bg-yellow-500 selection:text-black">
+    <main className="min-h-screen pb-24 font-sans selection:bg-[#B88727] selection:text-white" style={{ backgroundColor: '#F3E8CC', color: '#3A2418' }}>
       {/* Promo Modal Component */}
       <PromoModal campaign={activeCampaign} />
 
@@ -61,215 +60,241 @@ export default async function HomePage() {
       <StickyCartBar />
 
       {/* Top Street Banner */}
-      <div className="bg-yellow-500 text-black py-2.5 px-4 font-mono text-xs font-bold text-center tracking-wider uppercase overflow-hidden whitespace-nowrap">
+      <div className="py-2.5 px-4 font-mono text-xs font-bold text-center tracking-wider uppercase overflow-hidden whitespace-nowrap shadow-sm" style={{ backgroundColor: '#B88727', color: '#FFF7E5' }}>
         <div className="inline-block animate-pulse">
           🛵 ENVÍO GRATIS EN TODA LA ZONA DE REPARTO DE SEVILLA · SABOR VENEZOLANO 100% REAL 🇻🇪
         </div>
       </div>
 
-      {/* A. HERO STREET FOOD SECTION */}
-      <section className="relative px-4 pt-8 pb-12 md:py-16 max-w-6xl mx-auto overflow-hidden">
-        {/* Glow ambient background */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-yellow-500/10 blur-[120px] rounded-full pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col items-center text-center space-y-6">
+      {/* A. HERO KRAFT EDITORIAL STREET FOOD SECTION */}
+      <section className="relative px-4 pt-6 pb-10 md:py-14 max-w-6xl mx-auto">
+        <div className="flex flex-col items-center text-center space-y-5">
           {/* Open/Closed Badge */}
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 border border-neutral-800 backdrop-blur-sm">
-            <span className={`w-2.5 h-2.5 rounded-full ${isStoreOpen ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-            <span className="text-xs font-bold font-mono tracking-wider text-neutral-200 uppercase">
+          <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full shadow-sm" style={{ backgroundColor: '#FFF7E5', border: '1px solid #E8D5A8' }}>
+            <span className={`w-2.5 h-2.5 rounded-full ${isStoreOpen ? 'bg-emerald-600 animate-pulse' : 'bg-red-500'}`} />
+            <span className="text-xs font-bold font-mono tracking-wider uppercase" style={{ color: '#3A2418' }}>
               {isStoreOpen ? 'Abierto Ahora para Pedidos' : 'Cerrado Temporalmente'}
             </span>
           </div>
 
           {/* Main Brand Title */}
           <div className="space-y-1">
-            <span className="text-xs md:text-sm font-bold uppercase tracking-[0.3em] text-neutral-400 font-mono block">
+            <span className="text-xs md:text-sm font-bold uppercase tracking-[0.3em] font-mono block" style={{ color: '#A94F2F' }}>
               VENEZUELAN STREET FOOD
             </span>
             <h1 
-              className="text-6xl md:text-8xl font-bold tracking-tight text-yellow-500 uppercase leading-none"
-              style={{ fontFamily: 'Bebas Neue, sans-serif' }}
+              className="text-6xl md:text-8xl font-bold tracking-tight uppercase leading-none"
+              style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}
             >
               LA ESQUINA 51
             </h1>
-            <p className="text-sm md:text-lg text-neutral-300 italic font-medium font-serif pt-1">
+            <p className="text-sm md:text-lg italic font-serif pt-1" style={{ color: '#65513F' }}>
               &quot;Sabor de calle. Sabor de casa.&quot;
             </p>
-          </div>
-
-          {/* Hero gastronomy food showcase image or placeholder */}
-          <div className="relative w-full max-w-md h-64 md:h-80 rounded-3xl overflow-hidden border border-neutral-800 shadow-2xl bg-neutral-900 my-4 group">
-            {promoProduct?.image ? (
-              <Image
-                src={promoProduct.image}
-                alt="La Esquina 51 Venezuelan Street Food"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700"
-                priority
-                sizes="(max-width: 768px) 100vw, 500px"
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-t from-neutral-950 via-neutral-900 to-neutral-950">
-                <Flame className="w-20 h-20 text-yellow-500 mb-3 animate-pulse" />
-                <span className="font-mono text-xs font-bold text-yellow-400 uppercase tracking-widest">
-                  FOTOGRAFÍA GASTRONÓMICA REAL
-                </span>
-                <span className="text-xs text-neutral-400 mt-1 max-w-xs">
-                  5 Mini Burgers + Patatas + Salsas + Coca-Cola
-                </span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-              <div className="text-left">
-                <span className="text-[10px] font-mono text-yellow-400 font-bold uppercase tracking-wider block">Estrella de la Casa</span>
-                <span className="text-xl font-bold font-mono text-white">El Box Mini-Monster · 10,50 €</span>
-              </div>
-            </div>
           </div>
 
           {/* Hero CTAs */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs sm:max-w-md pt-2">
             <Link
               href="/menu"
-              className="w-full py-4 rounded-2xl font-bold text-sm uppercase tracking-wider bg-yellow-500 text-black hover:bg-yellow-400 transition-transform active:scale-95 text-center flex items-center justify-center gap-2 shadow-xl"
-              style={{ fontFamily: 'Oswald, sans-serif' }}
+              className="w-full py-3.5 rounded-2xl font-bold text-xs md:text-sm uppercase tracking-wider transition-transform active:scale-95 text-center flex items-center justify-center gap-2 shadow-md"
+              style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
             >
-              <ShoppingBag size={18} /> VER MENÚ COMPLETO
+              <ShoppingBag size={17} /> VER MENÚ COMPLETO
             </Link>
             <Link
               href="/cart"
-              className="w-full py-4 rounded-2xl font-bold text-sm uppercase tracking-wider bg-neutral-900 text-yellow-400 border border-yellow-500/40 hover:bg-neutral-800 transition-all text-center flex items-center justify-center gap-2"
-              style={{ fontFamily: 'Oswald, sans-serif' }}
+              className="w-full py-3.5 rounded-2xl font-bold text-xs md:text-sm uppercase tracking-wider transition-all text-center flex items-center justify-center gap-2 shadow-sm"
+              style={{ backgroundColor: '#FFF7E5', color: '#3A2418', border: '1px solid #D4C4A0', fontFamily: 'Oswald, sans-serif' }}
             >
-              HACER PEDIDO <ArrowRight size={18} />
+              HACER PEDIDO <ArrowRight size={17} />
             </Link>
+          </div>
+
+          {/* Editorial Real Photography Collage */}
+          <div className="w-full max-w-5xl pt-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              {/* Product 1: La Casi Triple */}
+              <div className="relative h-44 sm:h-56 md:h-64 rounded-2xl overflow-hidden shadow-md group" style={{ border: '2px solid #E8D5A8', backgroundColor: '#FFF7E5' }}>
+                <Image
+                  src="/images/products/la-casi-triple.jpg"
+                  alt="La Casi Triple - La Esquina 51"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  priority
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#3A2418]/80 via-transparent to-transparent flex items-end p-3">
+                  <span className="font-bold text-xs font-mono text-[#FFF7E5]">La Casi Triple · 8,50€</span>
+                </div>
+              </div>
+
+              {/* Product 2: El Amarre Árabe */}
+              <div className="relative h-44 sm:h-56 md:h-64 rounded-2xl overflow-hidden shadow-md group" style={{ border: '2px solid #E8D5A8', backgroundColor: '#FFF7E5' }}>
+                <Image
+                  src="/images/products/amarre-arabe.png"
+                  alt="El Amarre Árabe - La Esquina 51"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#3A2418]/80 via-transparent to-transparent flex items-end p-3">
+                  <span className="font-bold text-xs font-mono text-[#FFF7E5]">El Amarre Árabe · 9,00€</span>
+                </div>
+              </div>
+
+              {/* Product 3: El Ghostesco */}
+              <div className="relative h-44 sm:h-56 md:h-64 rounded-2xl overflow-hidden shadow-md group" style={{ border: '2px solid #E8D5A8', backgroundColor: '#FFF7E5' }}>
+                <Image
+                  src="/images/products/el-ghostesco.png"
+                  alt="El Ghostesco - La Esquina 51"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#3A2418]/80 via-transparent to-transparent flex items-end p-3">
+                  <span className="font-bold text-xs font-mono text-[#FFF7E5]">El Ghostesco</span>
+                </div>
+              </div>
+
+              {/* Product 4: Empanada Incondicional */}
+              <div className="relative h-44 sm:h-56 md:h-64 rounded-2xl overflow-hidden shadow-md group" style={{ border: '2px solid #E8D5A8', backgroundColor: '#FFF7E5' }}>
+                <Image
+                  src="/images/products/empanada-incondicional.png"
+                  alt="Empanada Incondicional - La Esquina 51"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#3A2418]/80 via-transparent to-transparent flex items-end p-3">
+                  <span className="font-bold text-xs font-mono text-[#FFF7E5]">La Incondicional · 3,50€</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* B. SECCIÓN PROMOCIONAL DESTACADA (MINI-MONSTER) */}
-      <section className="px-4 py-8 max-w-6xl mx-auto">
-        <div className="p-6 md:p-10 rounded-3xl bg-neutral-900 border border-yellow-500/30 relative overflow-hidden shadow-2xl">
+      {/* B. SECCIÓN BOX MINI-MONSTER CON FOTOGRAFÍA REAL GRANDE */}
+      <section className="px-4 py-6 max-w-6xl mx-auto">
+        <div className="p-6 md:p-10 rounded-3xl relative overflow-hidden shadow-md" style={{ backgroundColor: '#FFF7E5', border: '2px solid #E8D5A8' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            {/* Image side */}
+            <div className="relative h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid #D4C4A0' }}>
+              <Image
+                src="/images/products/box-mini-monster.png"
+                alt="El Box Mini-Monster La Esquina 51"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 500px"
+              />
+            </div>
+
+            {/* Content side */}
             <div className="space-y-4">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold font-mono uppercase">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold font-mono uppercase" style={{ backgroundColor: 'rgba(169,79,47,0.15)', color: '#A94F2F' }}>
                 <Flame size={14} /> LO MÁS VIRAL DE SEVILLA
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+              <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
                 EL BOX MINI-MONSTER
               </h2>
-              <p className="text-xs md:text-sm text-neutral-300">
-                5 mini hamburguesas de vacuno premium con bacon crujiente, queso cheddar fundido o lechuga fresca + ración gigante de patatas fritas + salsas artesanales + 1 Coca-Cola bien fría.
+              <p className="text-xs md:text-sm" style={{ color: '#65513F' }}>
+                5 mini burguer de ternera premium + ración gigante de patatas fritas crujientes + salsas artesanales de la casa + Coca-Cola bien fría.
               </p>
               <div className="pt-2 flex items-baseline space-x-3">
-                <span className="text-3xl md:text-4xl font-bold font-mono text-yellow-500">{formatPrice(10.50)}</span>
-                <span className="text-xs text-neutral-400 uppercase font-mono tracking-wider">Menú Completo para Compartir</span>
+                <span className="text-3xl md:text-4xl font-bold font-mono" style={{ color: '#A94F2F' }}>{formatPrice(10.50)}</span>
+                <span className="text-xs uppercase font-mono tracking-wider" style={{ color: '#65513F' }}>Menú Completo</span>
               </div>
-              <div className="pt-2">
+              <div className="pt-2 flex flex-wrap gap-3">
                 <Link
                   href="/menu"
-                  className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase bg-yellow-500 text-black hover:bg-yellow-400 transition-transform active:scale-95"
-                  style={{ fontFamily: 'Oswald, sans-serif' }}
+                  className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-transform active:scale-95 shadow-md"
+                  style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
                 >
                   <ShoppingBag size={16} />
-                  <span>PEDIR EL BOX AHORA</span>
+                  <span>PEDIR AHORA</span>
+                </Link>
+                <Link
+                  href="/menu"
+                  className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-all"
+                  style={{ backgroundColor: '#F3E8CC', color: '#3A2418', border: '1px solid #D4C4A0', fontFamily: 'Oswald, sans-serif' }}
+                >
+                  <span>VER MENÚ</span>
                 </Link>
               </div>
             </div>
-
-            <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center">
-              {promoProduct?.image ? (
-                <Image
-                  src={promoProduct.image}
-                  alt="El Box Mini Monster"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 500px"
-                />
-              ) : (
-                <div className="text-center p-6 space-y-2">
-                  <Star className="w-12 h-12 text-yellow-500 mx-auto animate-spin" style={{ animationDuration: '8s' }} />
-                  <p className="font-mono text-xs text-yellow-400 font-bold uppercase">Fotografía Real del Product Box</p>
-                  <p className="text-[10px] text-neutral-500">5 Mini Burgers + Patatas + Salsas</p>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </section>
 
-      {/* C. PRODUCTOS DESTACADOS ("LO MÁS PEDIDO EN LA 51") */}
+      {/* C. LO MÁS PEDIDO EN LA 51 */}
       <section className="px-4 py-8 max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-between items-end border-b border-neutral-800 pb-4">
+        <div className="flex justify-between items-end border-b pb-4" style={{ borderColor: '#E8D5A8' }}>
           <div>
-            <span className="text-xs font-mono font-bold uppercase text-yellow-500 tracking-widest block">SELECCIÓN ESTRELLA</span>
-            <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: 'var(--brand-cream)' }}>
+            <span className="text-xs font-mono font-bold uppercase tracking-widest block" style={{ color: '#A94F2F' }}>SELECCIÓN ESTRELLA</span>
+            <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
               LO MÁS PEDIDO EN LA 51
             </h2>
           </div>
-          <Link href="/menu" className="text-xs font-bold text-yellow-500 hover:underline font-mono">
+          <Link href="/menu" className="text-xs font-bold hover:underline font-mono" style={{ color: '#B88727' }}>
             VER TODO →
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((prod) => (
-            <div key={prod.id} className="bg-neutral-900 rounded-3xl border border-neutral-800 overflow-hidden flex flex-col justify-between hover:border-yellow-500/40 transition-colors shadow-lg group">
-              <div className="relative w-full h-48 bg-neutral-950 flex items-center justify-center overflow-hidden">
-                {prod.image ? (
+          {featuredProducts.map((prod) => {
+            const prodImg = prod.image_url || prod.image || '/images/products/la-casi-triple.jpg';
+            return (
+              <div key={prod.id} className="rounded-3xl border overflow-hidden flex flex-col justify-between shadow-sm group" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+                <div className="relative w-full h-48 flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#F3E8CC' }}>
                   <Image
-                    src={prod.image}
+                    src={prodImg}
                     alt={prod.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                     sizes="(max-width: 768px) 100vw, 300px"
                   />
-                ) : (
-                  <div className="text-center p-4">
-                    <ShoppingBag className="w-10 h-10 text-neutral-700 mx-auto mb-2" />
-                    <span className="text-[10px] font-mono text-neutral-500">Foto Real del Producto</span>
-                  </div>
-                )}
-                {prod.sold_out && (
-                  <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-                    <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold font-mono uppercase rounded-full">
-                      AGOTADO
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <div>
-                  <h3 className="text-xl font-bold uppercase tracking-wide text-white" style={{ fontFamily: 'Oswald, sans-serif' }}>
-                    {prod.name}
-                  </h3>
-                  <p className="text-xs text-neutral-400 mt-1 line-clamp-2 leading-relaxed">
-                    {prod.description}
-                  </p>
+                  {prod.sold_out && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold font-mono uppercase rounded-full">
+                        AGOTADO
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-neutral-800">
-                  <span className="text-2xl font-bold font-mono text-yellow-500">{formatPrice(prod.price)}</span>
-                  <Link
-                    href={`/menu`}
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-yellow-500 text-black hover:bg-yellow-400 transition-transform active:scale-95 uppercase tracking-wider"
-                    style={{ fontFamily: 'Oswald, sans-serif' }}
-                  >
-                    AÑADIR
-                  </Link>
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="text-xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
+                      {prod.name}
+                    </h3>
+                    <p className="text-xs mt-1 line-clamp-2 leading-relaxed" style={{ color: '#65513F' }}>
+                      {prod.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: '#E8D5A8' }}>
+                    <span className="text-2xl font-bold font-mono" style={{ color: '#A94F2F' }}>{formatPrice(prod.price)}</span>
+                    <Link
+                      href="/menu"
+                      className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-transform active:scale-95"
+                      style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
+                    >
+                      AÑADIR
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
-      {/* D. SECCIÓN CATEGORÍAS */}
+      {/* D. CATEGORÍAS */}
       <section className="px-4 py-8 max-w-6xl mx-auto space-y-6">
-        <div className="border-b border-neutral-800 pb-4">
-          <span className="text-xs font-mono font-bold uppercase text-yellow-500 tracking-widest block">EXPLORA EL MENÚ</span>
-          <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: 'var(--brand-cream)' }}>
+        <div className="border-b pb-4" style={{ borderColor: '#E8D5A8' }}>
+          <span className="text-xs font-mono font-bold uppercase tracking-widest block" style={{ color: '#A94F2F' }}>EXPLORA EL MENÚ</span>
+          <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
             NUESTRAS CATEGORÍAS
           </h2>
         </div>
@@ -279,12 +304,13 @@ export default async function HomePage() {
             <Link
               key={cat.id}
               href="/menu"
-              className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 hover:border-yellow-500 text-center flex flex-col items-center justify-center space-y-2 group transition-all"
+              className="p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-2 group transition-all shadow-sm hover:shadow-md"
+              style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}
             >
-              <div className="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: 'rgba(184,135,39,0.15)', color: '#B88727' }}>
                 <Flame size={20} />
               </div>
-              <span className="font-bold text-xs uppercase tracking-wider text-neutral-200 group-hover:text-yellow-400" style={{ fontFamily: 'Oswald, sans-serif' }}>
+              <span className="font-bold text-xs uppercase tracking-wider" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
                 {cat.name}
               </span>
             </Link>
@@ -292,22 +318,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* E. HORARIOS Y ZONAS DE REPARTO DE SEVILLA */}
+      {/* E. HORARIOS Y ZONAS DE REPARTO */}
       <section className="px-4 py-8 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Horario Card */}
-        <div className="p-6 rounded-3xl bg-neutral-900 border border-neutral-800 space-y-4">
-          <div className="flex items-center space-x-2 text-yellow-500 border-b border-neutral-800 pb-3">
+        <div className="p-6 rounded-3xl border space-y-4 shadow-sm" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+          <div className="flex items-center space-x-2 border-b pb-3" style={{ borderColor: '#E8D5A8', color: '#B88727' }}>
             <Clock size={20} />
-            <h3 className="font-bold text-xl uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif' }}>
+            <h3 className="font-bold text-xl uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
               HORARIO DE PEDIDOS
             </h3>
           </div>
-          <ul className="space-y-3 text-xs text-neutral-300">
+          <ul className="space-y-3 text-xs" style={{ color: '#3A2418' }}>
             {hoursData && hoursData.length > 0 ? (
               hoursData.map((h) => {
                 const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
                 return (
-                  <li key={h.id} className="flex justify-between items-center border-b border-neutral-800/60 pb-2 last:border-0">
+                  <li key={h.id} className="flex justify-between items-center border-b pb-2 last:border-0" style={{ borderColor: '#E8D5A8' }}>
                     <span className="font-bold font-mono">{dayNames[h.day_of_week]}</span>
                     <span>{h.active ? `${h.open_time} - ${h.close_time}` : 'Cerrado'}</span>
                   </li>
@@ -315,11 +341,11 @@ export default async function HomePage() {
               })
             ) : (
               <>
-                <li className="flex justify-between items-center border-b border-neutral-800 pb-2">
+                <li className="flex justify-between items-center border-b pb-2" style={{ borderColor: '#E8D5A8' }}>
                   <span className="font-bold font-mono">Viernes</span>
                   <span>19:00 - 00:00</span>
                 </li>
-                <li className="flex justify-between items-center border-b border-neutral-800 pb-2">
+                <li className="flex justify-between items-center border-b pb-2" style={{ borderColor: '#E8D5A8' }}>
                   <span className="font-bold font-mono">Sábado</span>
                   <span>19:00 - 00:00</span>
                 </li>
@@ -333,29 +359,29 @@ export default async function HomePage() {
         </div>
 
         {/* Zonas Card */}
-        <div className="p-6 rounded-3xl bg-neutral-900 border border-neutral-800 space-y-4">
-          <div className="flex items-center space-x-2 text-yellow-500 border-b border-neutral-800 pb-3">
+        <div className="p-6 rounded-3xl border space-y-4 shadow-sm" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+          <div className="flex items-center space-x-2 border-b pb-3" style={{ borderColor: '#E8D5A8', color: '#B88727' }}>
             <MapPin size={20} />
-            <h3 className="font-bold text-xl uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif' }}>
+            <h3 className="font-bold text-xl uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
               ZONAS DE REPARTO EN SEVILLA
             </h3>
           </div>
-          <ul className="space-y-2 text-xs text-neutral-300">
+          <ul className="space-y-2 text-xs" style={{ color: '#3A2418' }}>
             {zonesData && zonesData.length > 0 ? (
               zonesData.map((z) => (
                 <li key={z.id} className="flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                  <span className="font-bold text-neutral-200">{z.name}</span>
-                  <span className="text-neutral-500 font-mono text-[10px]">({Array.isArray(z.postal_codes) ? z.postal_codes.join(', ') : z.postal_codes})</span>
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#A94F2F' }} />
+                  <span className="font-bold">{z.name}</span>
+                  <span className="font-mono text-[10px]" style={{ color: '#65513F' }}>({Array.isArray(z.postal_codes) ? z.postal_codes.join(', ') : z.postal_codes})</span>
                 </li>
               ))
             ) : (
               <>
-                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full bg-yellow-500" /><span>Polígono San Pablo (41007)</span></li>
-                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full bg-yellow-500" /><span>La Macarena (41009 / 41003)</span></li>
-                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full bg-yellow-500" /><span>Centro / Casco Antiguo (41001 / 41002 / 41004)</span></li>
-                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full bg-yellow-500" /><span>Hytasa (41010)</span></li>
-                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full bg-yellow-500" /><span>El Corte Inglés Nervión (41005)</span></li>
+                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#A94F2F' }} /><span>Polígono San Pablo (41007)</span></li>
+                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#A94F2F' }} /><span>La Macarena (41009 / 41003)</span></li>
+                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#A94F2F' }} /><span>Centro / Casco Antiguo (41001 / 41002 / 41004)</span></li>
+                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#A94F2F' }} /><span>Hytasa (41010)</span></li>
+                <li className="flex items-center space-x-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#A94F2F' }} /><span>El Corte Inglés Nervión (41005)</span></li>
               </>
             )}
           </ul>
@@ -363,20 +389,20 @@ export default async function HomePage() {
       </section>
 
       {/* F. CTA FINAL PEDIDO */}
-      <section className="px-4 py-12 max-w-4xl mx-auto text-center space-y-6">
-        <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tight text-yellow-500" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+      <section className="px-4 py-10 max-w-4xl mx-auto text-center space-y-5">
+        <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tight" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
           ¿TIENES HAMBRE DE CALLE?
         </h2>
-        <p className="text-xs md:text-sm text-neutral-400 max-w-md mx-auto">
+        <p className="text-xs md:text-sm max-w-md mx-auto" style={{ color: '#65513F' }}>
           Haz tu pedido ahora mismo. Entrega rápida en tu casa en Sevilla, pago en efectivo o Bizum al recibir.
         </p>
         <div>
           <Link
             href="/menu"
-            className="inline-flex items-center space-x-2 px-8 py-4 rounded-2xl font-bold text-sm uppercase tracking-wider bg-yellow-500 text-black hover:bg-yellow-400 transition-transform active:scale-95 shadow-2xl"
-            style={{ fontFamily: 'Oswald, sans-serif' }}
+            className="inline-flex items-center space-x-2 px-8 py-4 rounded-2xl font-bold text-xs md:text-sm uppercase tracking-wider transition-transform active:scale-95 shadow-xl"
+            style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
           >
-            <ShoppingBag size={20} />
+            <ShoppingBag size={18} />
             <span>PEDIR AHORA MISMO</span>
           </Link>
         </div>

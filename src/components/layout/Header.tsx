@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, UtensilsCrossed } from 'lucide-react';
 import { useCart } from '@/features/cart/cart-context';
 import { usePathname } from 'next/navigation';
 
@@ -17,39 +17,59 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#0A0A0A]/90 backdrop-blur-sm border-b border-[#1A1A1A]">
+    <header className="sticky top-0 z-50 w-full backdrop-blur-md border-b shadow-sm transition-all" style={{ backgroundColor: 'rgba(255, 247, 229, 0.95)', borderColor: '#E8D5A8' }}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Mobile: Centered Logo, Desktop: Left Logo */}
-        <div className="flex-1 md:flex-none flex justify-center md:justify-start">
-          <Link href="/" className="font-bebas text-3xl text-[#F5C500] tracking-wider">
-            LA ESQUINA 51
+        {/* Brand Logo */}
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105" style={{ backgroundColor: '#B88727', color: '#FFF7E5' }}>
+              <UtensilsCrossed size={18} />
+            </div>
+            <div>
+              <span className="font-bold text-xl md:text-2xl tracking-wider block leading-none" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
+                LA ESQUINA 51
+              </span>
+              <span className="block text-[8px] font-mono tracking-widest uppercase font-bold" style={{ color: '#A94F2F' }}>
+                Street Food Venezuelan
+              </span>
+            </div>
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex flex-1 justify-center gap-8">
+        <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => {
             const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`font-oswald text-lg transition-colors ${
-                  isActive ? 'text-[#F5C500]' : 'text-gray-300 hover:text-white'
-                }`}
+                className="font-bold text-sm uppercase tracking-wider transition-colors py-1 relative"
+                style={{
+                  fontFamily: 'Oswald, sans-serif',
+                  color: isActive ? '#A94F2F' : '#3A2418',
+                }}
               >
                 {link.name}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: '#A94F2F' }} />
+                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Cart Icon */}
-        <div className="flex-1 md:flex-none flex justify-end">
-          <Link href="/cart" className="relative p-2 text-gray-300 hover:text-[#F5C500] transition-colors">
-            <ShoppingCart className="w-6 h-6" />
+        {/* Cart Button */}
+        <div className="flex items-center gap-3">
+          <Link 
+            href="/cart" 
+            className="relative flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-transform active:scale-95 shadow-sm"
+            style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
+          >
+            <ShoppingCart size={17} />
+            <span className="hidden sm:inline">Carrito</span>
             {totalItems > 0 && (
-              <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-black bg-[#F5C500] rounded-full border-2 border-[#0A0A0A]">
+              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono font-bold rounded-full" style={{ backgroundColor: '#A94F2F', color: '#FFF7E5' }}>
                 {totalItems > 99 ? '99+' : totalItems}
               </span>
             )}

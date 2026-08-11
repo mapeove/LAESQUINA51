@@ -63,26 +63,26 @@ export function PromoModal({ campaign }: PromoModalProps) {
   if (!isOpen || !campaign) return null;
 
   const fmtPrice = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
+  const imageUrl = campaign.image_url || '/images/products/box-mini-monster.png';
   const hasVideo = campaign.media_type === 'VIDEO' && campaign.video_url;
-  const hasImage = campaign.image_url;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-up">
       <div 
-        className="relative w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"
-        style={{ backgroundColor: '#FFF7E5', border: '2px solid #B88727' }}
+        className="relative w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row border-2"
+        style={{ backgroundColor: '#FFF7E5', borderColor: '#B88727' }}
       >
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 z-10 p-2 rounded-full transition-colors"
-          style={{ backgroundColor: 'rgba(58,36,24,0.7)', color: '#F3E8CC' }}
+          className="absolute top-3 right-3 z-20 p-2 rounded-full transition-colors shadow"
+          style={{ backgroundColor: 'rgba(58,36,24,0.85)', color: '#FFF7E5' }}
           aria-label="Cerrar"
         >
           <X size={18} />
         </button>
 
-        {/* Media section */}
-        <div className="relative w-full h-52 md:h-60 overflow-hidden" style={{ backgroundColor: '#F3E8CC' }}>
+        {/* Media section (Image top on mobile, left on desktop) */}
+        <div className="relative w-full md:w-1/2 h-56 md:h-auto min-h-[240px] overflow-hidden flex-shrink-0" style={{ backgroundColor: '#F3E8CC' }}>
           {hasVideo ? (
             <video
               src={campaign.video_url!}
@@ -92,65 +92,59 @@ export function PromoModal({ campaign }: PromoModalProps) {
               loop
               className="w-full h-full object-cover"
             />
-          ) : hasImage ? (
+          ) : (
             <Image
-              src={campaign.image_url!}
+              src={imageUrl}
               alt={campaign.title}
               fill
               className="object-cover"
-              sizes="(max-width: 768px) 100vw, 500px"
+              sizes="(max-width: 768px) 100vw, 400px"
               priority
             />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center" style={{ backgroundColor: '#F3E8CC' }}>
-              <Flame className="w-14 h-14 mb-2 animate-bounce" style={{ color: '#B88727' }} />
-              <span className="font-mono text-xs uppercase tracking-widest font-bold" style={{ color: '#B88727' }}>
-                OFERTA ESTRELLA
-              </span>
-            </div>
           )}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #FFF7E5, transparent 50%)' }} />
         </div>
 
-        {/* Content */}
-        <div className="p-6 md:p-8 space-y-3 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-mono" style={{ backgroundColor: 'rgba(184,135,39,0.15)', border: '1px solid rgba(184,135,39,0.3)', color: '#B88727' }}>
-            <Flame size={13} /> PROMOCIÓN DESTACADA
+        {/* Content section (Bottom on mobile, right on desktop) */}
+        <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between space-y-4 text-center md:text-left">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-mono" style={{ backgroundColor: 'rgba(184,135,39,0.15)', border: '1px solid rgba(184,135,39,0.3)', color: '#B88727' }}>
+              <Flame size={13} /> PROMOCIÓN DESTACADA
+            </div>
+
+            <h2 
+              className="text-2xl md:text-3xl font-bold leading-tight uppercase tracking-wide"
+              style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}
+            >
+              {campaign.title}
+            </h2>
+
+            {campaign.subtitle && (
+              <p className="text-xs font-medium uppercase tracking-wide font-mono" style={{ color: '#A94F2F' }}>
+                {campaign.subtitle}
+              </p>
+            )}
+
+            {campaign.description && (
+              <p className="text-xs leading-relaxed" style={{ color: '#65513F' }}>
+                {campaign.description}
+              </p>
+            )}
+
+            {campaign.promo_price && (
+              <div className="pt-1">
+                <span className="text-[10px] uppercase tracking-widest block font-mono" style={{ color: '#65513F' }}>Precio Especial</span>
+                <span className="text-4xl font-bold tracking-tight font-mono" style={{ color: '#A94F2F' }}>
+                  {fmtPrice(campaign.promo_price)}
+                </span>
+              </div>
+            )}
           </div>
 
-          <h2 
-            className="text-xl md:text-2xl font-bold leading-tight uppercase tracking-wide"
-            style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}
-          >
-            {campaign.title}
-          </h2>
-
-          {campaign.subtitle && (
-            <p className="text-xs text-center font-medium" style={{ color: '#65513F' }}>
-              {campaign.subtitle}
-            </p>
-          )}
-
-          {campaign.description && (
-            <p className="text-xs" style={{ color: '#65513F' }}>
-              {campaign.description}
-            </p>
-          )}
-
-          {campaign.promo_price && (
-            <div className="pt-1">
-              <span className="text-[10px] uppercase tracking-widest block font-mono" style={{ color: '#65513F' }}>Precio Especial</span>
-              <span className="text-4xl font-bold tracking-tight font-mono" style={{ color: '#A94F2F' }}>
-                {fmtPrice(campaign.promo_price)}
-              </span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3 pt-3">
+          <div className="grid grid-cols-2 gap-3 pt-2">
             <Link
               href={campaign.button_url || '/menu'}
               onClick={handleClose}
-              className="py-3 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg"
+              className="py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md"
               style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
             >
               <ShoppingBag size={15} /> {campaign.button_text || 'PEDIR AHORA'}
@@ -159,7 +153,7 @@ export function PromoModal({ campaign }: PromoModalProps) {
             <Link
               href="/menu"
               onClick={handleClose}
-              className="py-3 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+              className="py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
               style={{ backgroundColor: '#F3E8CC', color: '#3A2418', border: '1px solid #D4C4A0', fontFamily: 'Oswald, sans-serif' }}
             >
               VER MENÚ <ArrowRight size={15} />

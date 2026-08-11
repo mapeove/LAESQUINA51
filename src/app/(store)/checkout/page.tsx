@@ -15,7 +15,7 @@ export default function CheckoutPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [bizumPhone, setBizumPhone] = useState('633184354');
+  const [bizumPhone, setBizumPhone] = useState('34633184354');
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -52,13 +52,17 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="px-4 py-16 max-w-lg mx-auto text-center animate-fade-up">
-        <h1 className="text-3xl font-bold font-mono text-white mb-4">TU CARRITO ESTÁ VACÍO</h1>
-        <p className="text-neutral-400 text-xs mb-6">Añade tus hamburguesas y combos favoritos antes de realizar el pedido.</p>
+      <div className="px-4 py-16 max-w-lg mx-auto text-center animate-fade-up min-h-[60vh] flex flex-col items-center justify-center">
+        <h1 className="text-3xl font-bold uppercase mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
+          TU CARRITO ESTÁ VACÍO
+        </h1>
+        <p className="text-xs mb-6 font-mono" style={{ color: '#65513F' }}>
+          Añade tus hamburguesas y combos favoritos antes de realizar el pedido.
+        </p>
         <Link
           href="/menu"
-          className="inline-block px-6 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider bg-yellow-500 text-black hover:bg-yellow-400"
-          style={{ fontFamily: 'Oswald, sans-serif' }}
+          className="inline-block px-6 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider shadow-md"
+          style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
         >
           IR AL MENÚ
         </Link>
@@ -112,62 +116,65 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="px-4 py-8 max-w-2xl mx-auto animate-fade-up">
+    <div className="px-4 py-8 max-w-2xl mx-auto animate-fade-up min-h-screen" style={{ backgroundColor: '#F3E8CC' }}>
       <div className="flex items-center justify-between mb-6">
-        <Link href="/cart" className="flex items-center text-xs font-bold text-neutral-400 hover:text-white gap-1">
+        <Link href="/cart" className="flex items-center text-xs font-bold gap-1 hover:underline" style={{ color: '#65513F' }}>
           <ArrowLeft size={16} /> Volver al carrito
         </Link>
-        <span className="text-xs font-mono font-bold text-yellow-500 uppercase tracking-widest">Paso Final</span>
+        <span className="text-xs font-mono font-bold uppercase tracking-widest" style={{ color: '#A94F2F' }}>Paso Final</span>
       </div>
 
       <h1
-        className="text-4xl font-bold tracking-wide mb-6 text-center"
-        style={{ fontFamily: 'Bebas Neue, sans-serif', color: 'var(--brand-cream)' }}
+        className="text-4xl font-bold tracking-wide mb-6 text-center uppercase"
+        style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}
       >
         FINALIZAR PEDIDO
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Sección 1: Datos Personales */}
-        <section className="p-6 rounded-2xl border border-neutral-800 bg-neutral-900/90 space-y-4 shadow-xl">
-          <h2 className="text-lg font-bold font-mono text-yellow-500 flex items-center gap-2">
+        <section className="p-6 rounded-2xl border space-y-4 shadow-sm" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+          <h2 className="text-lg font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418', borderColor: '#E8D5A8' }}>
             1. Tus Datos de Contacto
           </h2>
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1">Nombre y Apellidos *</label>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Nombre y Apellidos *</label>
               <input
                 type="text"
                 required
                 value={formData.customer_name}
                 onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
                 placeholder="Ej: Juan Pérez"
-                className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm"
+                className="w-full p-3 rounded-xl text-sm focus:outline-none"
+                style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Teléfono Móvil (WhatsApp) *</label>
+                <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Teléfono Móvil (WhatsApp) *</label>
                 <input
                   type="tel"
                   required
                   value={formData.customer_phone}
                   onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
                   placeholder="612345678"
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm font-mono"
+                  className="w-full p-3 rounded-xl font-mono text-sm focus:outline-none"
+                  style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Email (Opcional)</label>
+                <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Email (Opcional)</label>
                 <input
                   type="email"
                   value={formData.customer_email}
                   onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
                   placeholder="juan@ejemplo.com"
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm"
+                  className="w-full p-3 rounded-xl text-sm focus:outline-none"
+                  style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 />
               </div>
             </div>
@@ -175,67 +182,72 @@ export default function CheckoutPage() {
         </section>
 
         {/* Sección 2: Dirección */}
-        <section className="p-6 rounded-2xl border border-neutral-800 bg-neutral-900/90 space-y-4 shadow-xl">
-          <h2 className="text-lg font-bold font-mono text-yellow-500 flex items-center gap-2">
+        <section className="p-6 rounded-2xl border space-y-4 shadow-sm" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+          <h2 className="text-lg font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418', borderColor: '#E8D5A8' }}>
             2. Dirección de Entrega en Sevilla
           </h2>
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1">Calle y Número *</label>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Calle y Número *</label>
               <input
                 type="text"
                 required
                 value={formData.delivery_address}
                 onChange={(e) => setFormData({ ...formData, delivery_address: e.target.value })}
                 placeholder="Ej: Calle Sinaí 14"
-                className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm"
+                className="w-full p-3 rounded-xl text-sm focus:outline-none"
+                style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Piso (Opcional)</label>
+                <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Piso (Opcional)</label>
                 <input
                   type="text"
                   value={formData.delivery_floor}
                   onChange={(e) => setFormData({ ...formData, delivery_floor: e.target.value })}
                   placeholder="Ej: 3º"
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm"
+                  className="w-full p-3 rounded-xl text-sm focus:outline-none"
+                  style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Puerta (Opcional)</label>
+                <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Puerta (Opcional)</label>
                 <input
                   type="text"
                   value={formData.delivery_door}
                   onChange={(e) => setFormData({ ...formData, delivery_door: e.target.value })}
                   placeholder="Ej: B"
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm"
+                  className="w-full p-3 rounded-xl text-sm focus:outline-none"
+                  style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Código Postal *</label>
+                <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Código Postal *</label>
                 <input
                   type="text"
                   required
                   value={formData.delivery_postal_code}
                   onChange={(e) => setFormData({ ...formData, delivery_postal_code: e.target.value })}
                   placeholder="41007"
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm font-mono"
+                  className="w-full p-3 rounded-xl font-mono text-sm focus:outline-none"
+                  style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Zona de Reparto *</label>
+                <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Zona de Reparto *</label>
                 <select
                   value={formData.delivery_zone}
                   onChange={(e) => setFormData({ ...formData, delivery_zone: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm font-medium"
+                  className="w-full p-3 rounded-xl text-sm font-medium focus:outline-none"
+                  style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 >
                   <option value="Polígono San Pablo / 41007">Polígono San Pablo (41007)</option>
                   <option value="La Macarena">La Macarena</option>
@@ -248,21 +260,22 @@ export default function CheckoutPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1">Observaciones para el repartidor (Opcional)</label>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Observaciones para el repartidor (Opcional)</label>
               <textarea
                 rows={2}
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Ej: Timbre averiado, llamar al llegar."
-                className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm"
+                className="w-full p-3 rounded-xl text-sm focus:outline-none"
+                style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
               />
             </div>
           </div>
         </section>
 
         {/* Sección 3: Método de Pago (ÚNICAMENTE EFECTIVO / BIZUM) */}
-        <section className="p-6 rounded-2xl border border-neutral-800 bg-neutral-900/90 space-y-4 shadow-xl">
-          <h2 className="text-lg font-bold font-mono text-yellow-500 flex items-center gap-2">
+        <section className="p-6 rounded-2xl border space-y-4 shadow-sm" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+          <h2 className="text-lg font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418', borderColor: '#E8D5A8' }}>
             3. Método de Pago Contra Entrega
           </h2>
 
@@ -271,37 +284,39 @@ export default function CheckoutPage() {
             <button
               type="button"
               onClick={() => setFormData({ ...formData, payment_method: 'CASH' })}
-              className={`p-4 rounded-2xl border flex flex-col items-center justify-center text-center space-y-2 transition-all ${
+              className="p-4 rounded-2xl border flex flex-col items-center justify-center text-center space-y-2 transition-all"
+              style={
                 formData.payment_method === 'CASH'
-                  ? 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
-                  : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:border-neutral-700'
-              }`}
+                  ? { backgroundColor: 'rgba(184,135,39,0.15)', borderColor: '#B88727', color: '#B88727' }
+                  : { backgroundColor: '#F3E8CC', borderColor: '#D4C4A0', color: '#65513F' }
+              }
             >
               <Banknote size={28} />
               <span className="font-bold text-xs uppercase tracking-wider font-mono">EFECTIVO</span>
-              <span className="text-[10px] text-neutral-400">Pago en mano al repartidor</span>
+              <span className="text-[10px]" style={{ color: '#65513F' }}>Pago en mano al recibir</span>
             </button>
 
             {/* Opción Bizum */}
             <button
               type="button"
               onClick={() => setFormData({ ...formData, payment_method: 'BIZUM' })}
-              className={`p-4 rounded-2xl border flex flex-col items-center justify-center text-center space-y-2 transition-all ${
+              className="p-4 rounded-2xl border flex flex-col items-center justify-center text-center space-y-2 transition-all"
+              style={
                 formData.payment_method === 'BIZUM'
-                  ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                  : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:border-neutral-700'
-              }`}
+                  ? { backgroundColor: 'rgba(169,79,47,0.15)', borderColor: '#A94F2F', color: '#A94F2F' }
+                  : { backgroundColor: '#F3E8CC', borderColor: '#D4C4A0', color: '#65513F' }
+              }
             >
               <Wallet size={28} />
               <span className="font-bold text-xs uppercase tracking-wider font-mono">BIZUM</span>
-              <span className="text-[10px] text-neutral-400">Transferencia al recibir</span>
+              <span className="text-[10px]" style={{ color: '#65513F' }}>Transferencia al recibir</span>
             </button>
           </div>
 
           {/* Detalles dinámicos según pago */}
           {formData.payment_method === 'CASH' && (
-            <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2 animate-fade-up">
-              <label className="block text-xs font-medium text-neutral-300">
+            <div className="p-4 rounded-xl border space-y-2 animate-fade-up" style={{ backgroundColor: '#F3E8CC', borderColor: '#E8D5A8' }}>
+              <label className="block text-xs font-medium" style={{ color: '#3A2418' }}>
                 ¿Necesitas cambio? Indica con cuánto vas a pagar (€):
               </label>
               <input
@@ -310,20 +325,21 @@ export default function CheckoutPage() {
                 placeholder="Ej: 20 ó 50"
                 value={formData.cash_change_for}
                 onChange={(e) => setFormData({ ...formData, cash_change_for: e.target.value })}
-                className="w-full max-w-xs p-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white font-mono text-sm focus:outline-none focus:border-yellow-500"
+                className="w-full max-w-xs p-2.5 rounded-xl font-mono text-sm focus:outline-none"
+                style={{ backgroundColor: '#FFF7E5', border: '1px solid #D4C4A0', color: '#3A2418' }}
               />
             </div>
           )}
 
           {formData.payment_method === 'BIZUM' && (
-            <div className="p-4 rounded-xl bg-purple-950/40 border border-purple-900/60 space-y-2 animate-fade-up">
-              <span className="text-xs font-bold text-purple-300 block uppercase font-mono">
+            <div className="p-4 rounded-xl border space-y-2 animate-fade-up" style={{ backgroundColor: '#F3E8CC', borderColor: '#E8D5A8' }}>
+              <span className="text-xs font-bold uppercase font-mono block" style={{ color: '#A94F2F' }}>
                 📱 Instrucciones de Pago por Bizum:
               </span>
-              <p className="text-xs text-neutral-300">
+              <p className="text-xs" style={{ color: '#65513F' }}>
                 Podrás realizar el Bizum al repartidor en el momento exacto de la entrega al número oficial de La Esquina 51:
               </p>
-              <div className="p-2.5 rounded-lg bg-neutral-900 border border-purple-800/80 font-mono text-center text-lg font-bold text-purple-300 tracking-wider">
+              <div className="p-2.5 rounded-lg border font-mono text-center text-lg font-bold tracking-wider" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8', color: '#A94F2F' }}>
                 {bizumPhone}
               </div>
             </div>
@@ -331,39 +347,39 @@ export default function CheckoutPage() {
         </section>
 
         {/* Resumen del Pedido */}
-        <section className="p-6 rounded-2xl border border-neutral-800 bg-neutral-900/90 space-y-4 shadow-xl">
-          <h2 className="text-lg font-bold font-mono text-yellow-500">Resumen Final</h2>
+        <section className="p-6 rounded-2xl border space-y-4 shadow-sm" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+          <h2 className="text-lg font-bold uppercase tracking-wider" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>Resumen Final</h2>
 
           <div className="space-y-2 text-xs">
-            <div className="flex justify-between text-neutral-400">
+            <div className="flex justify-between" style={{ color: '#65513F' }}>
               <span>Subtotal ({items.length} líneas):</span>
-              <span className="font-mono">{formatPrice(subtotal)}</span>
+              <span className="font-mono font-bold" style={{ color: '#3A2418' }}>{formatPrice(subtotal)}</span>
             </div>
-            <div className="flex justify-between text-neutral-400">
+            <div className="flex justify-between" style={{ color: '#65513F' }}>
               <span>Gastos de Envío:</span>
-              <span className="font-mono text-green-400 font-bold">¡GRATIS!</span>
+              <span className="font-mono text-emerald-700 font-bold">¡GRATIS!</span>
             </div>
-            <div className="border-t border-neutral-800 pt-3 flex justify-between items-center text-base font-bold text-white">
+            <div className="border-t pt-3 flex justify-between items-center text-base font-bold" style={{ borderColor: '#E8D5A8', color: '#3A2418' }}>
               <span>TOTAL A PAGAR:</span>
-              <span className="text-2xl font-mono text-yellow-500 font-bold" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+              <span className="text-3xl font-mono font-bold" style={{ color: '#A94F2F' }}>
                 {formatPrice(total)}
               </span>
             </div>
           </div>
         </section>
 
-        {error && <p className="text-red-400 text-xs font-medium text-center">{error}</p>}
+        {error && <p className="text-xs font-medium text-center font-mono" style={{ color: '#A94F2F' }}>{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 rounded-2xl font-bold text-black uppercase tracking-wider text-lg shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
-          style={{ backgroundColor: 'var(--brand-yellow)', fontFamily: 'Oswald, sans-serif' }}
+          className="w-full py-4 rounded-2xl font-bold uppercase tracking-wider text-base shadow-md transition-transform active:scale-95 disabled:opacity-50"
+          style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
         >
           {loading ? 'CONFIRMANDO PEDIDO...' : 'CONFIRMAR Y REALIZAR PEDIDO'}
         </button>
 
-        <div className="flex items-center justify-center space-x-1 text-[10px] text-neutral-500 font-mono">
+        <div className="flex items-center justify-center space-x-1 text-[10px] font-mono" style={{ color: '#65513F' }}>
           <ShieldCheck size={14} />
           <span>Pago 100% seguro contra entrega sin comisiones ni tarjeta</span>
         </div>

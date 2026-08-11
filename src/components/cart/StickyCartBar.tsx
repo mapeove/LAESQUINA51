@@ -16,20 +16,21 @@ export function StickyCartBar() {
   }
 
   return (
-    <div className="fixed bottom-16 md:bottom-6 left-0 right-0 z-40 px-4 max-w-lg mx-auto pointer-events-none animate-fade-up">
+    <div className="fixed bottom-18 md:bottom-6 left-0 right-0 z-40 px-4 max-w-lg mx-auto pointer-events-none animate-fade-up">
       <Link
         href="/cart"
-        className="pointer-events-auto w-full p-4 rounded-2xl bg-yellow-500 text-black flex items-center justify-between shadow-2xl transition-transform active:scale-98 hover:bg-yellow-400 border border-yellow-400"
+        className="pointer-events-auto w-full p-4 rounded-2xl flex items-center justify-between shadow-2xl transition-transform active:scale-98 border"
+        style={{ backgroundColor: '#B88727', color: '#FFF7E5', borderColor: '#D4C4A0' }}
       >
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-black/10 rounded-xl flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ backgroundColor: 'rgba(255,247,229,0.2)' }}>
             <ShoppingBag size={20} />
           </div>
           <div>
             <span className="font-bold text-xs uppercase tracking-wider block" style={{ fontFamily: 'Oswald, sans-serif' }}>
               VER PEDIDO ({totalItems} {totalItems === 1 ? 'producto' : 'productos'})
             </span>
-            <span className="text-xs font-mono font-medium opacity-80">
+            <span className="text-[11px] font-mono opacity-90">
               Listo para enviar
             </span>
           </div>

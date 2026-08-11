@@ -11,9 +11,6 @@ export default async function OrderConfirmationPage({
   params: Promise<{ orderNumber: string }> 
 }) {
   const { orderNumber } = await params;
-  
-  // Try to fetch real order data if supabase is configured
-  // For now, handling the dev fallback if fetch fails or no env vars
   let order = null;
 
   try {
@@ -32,7 +29,6 @@ export default async function OrderConfirmationPage({
     if (dbError) throw dbError;
     order = orderData;
   } catch {
-    // If not found and order number is valid format, show mock in dev mode
     if (orderNumber.startsWith('E51-') && process.env.NODE_ENV === 'development') {
       order = {
         order_number: orderNumber,
@@ -40,7 +36,7 @@ export default async function OrderConfirmationPage({
         created_at: new Date().toISOString(),
         customer_name: 'Cliente Demo',
         customer_phone: '612345678',
-        shipping_address: 'Calle Demo 1, 41001 Sevilla',
+        delivery_address: 'Calle Demo 1, 41007 Sevilla',
         total: 15.50,
         order_items: [
           { name: 'Tequeños', quantity: 1, price: 6.50 },
@@ -60,42 +56,42 @@ export default async function OrderConfirmationPage({
   const whatsappUrl = `https://wa.me/34${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-2xl text-center">
-      <div className="bg-white p-8 rounded-3xl border shadow-sm mb-8" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
-        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+    <div className="container mx-auto px-4 py-12 max-w-2xl text-center min-h-screen" style={{ backgroundColor: '#F3E8CC' }}>
+      <div className="p-8 rounded-3xl border shadow-sm mb-8" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+        <div className="w-20 h-20 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="w-10 h-10" />
         </div>
         
-        <h1 className="text-3xl font-oswald font-bold mb-2" style={{ color: 'var(--brand-black)' }}>
+        <h1 className="text-3xl font-bold uppercase mb-2" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
           ¡Pedido Confirmado!
         </h1>
-        <p className="mb-6 text-lg" style={{ color: 'var(--brand-gray)' }}>
-          Tu pedido ha sido recibido y está siendo procesado.
+        <p className="mb-6 text-sm font-mono" style={{ color: '#65513F' }}>
+          Tu pedido ha sido recibido y está siendo procesado por La Esquina 51.
         </p>
 
-        <div className="py-6 px-4 rounded-xl mb-8" style={{ backgroundColor: 'var(--brand-cream)' }}>
-          <div className="text-sm mb-1 uppercase tracking-wider" style={{ color: 'var(--brand-gray)' }}>Número de Pedido</div>
-          <div className="text-5xl font-bebas tracking-wide" style={{ color: 'var(--brand-yellow)', textShadow: '1px 1px 0 #000' }}>
+        <div className="py-6 px-4 rounded-2xl mb-8 border" style={{ backgroundColor: '#F3E8CC', borderColor: '#E8D5A8' }}>
+          <div className="text-xs font-mono font-bold uppercase tracking-wider mb-1" style={{ color: '#65513F' }}>Número de Pedido</div>
+          <div className="text-5xl font-bold font-mono tracking-wide" style={{ color: '#A94F2F' }}>
             {order.order_number}
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row justify-center gap-4 text-left">
-          <div className="flex-1 p-4 border rounded-xl" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
-            <h3 className="font-bold mb-2">Detalles del cliente</h3>
-            <p className="text-sm text-gray-600">{order.customer_name}</p>
-            <p className="text-sm text-gray-600">{order.customer_phone}</p>
-            <p className="text-sm text-gray-600 mt-2">{order.shipping_address}</p>
+          <div className="flex-1 p-4 border rounded-xl" style={{ backgroundColor: '#F3E8CC', borderColor: '#E8D5A8' }}>
+            <h3 className="font-bold mb-2 uppercase text-xs tracking-wider" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>Detalles del cliente</h3>
+            <p className="text-sm font-semibold" style={{ color: '#3A2418' }}>{order.customer_name}</p>
+            <p className="text-xs font-mono" style={{ color: '#65513F' }}>{order.customer_phone}</p>
+            <p className="text-xs mt-2" style={{ color: '#65513F' }}>{order.delivery_address || order.shipping_address}</p>
           </div>
           
-          <div className="flex-1 p-4 border rounded-xl" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
-            <h3 className="font-bold mb-2 flex items-center gap-2">
+          <div className="flex-1 p-4 border rounded-xl" style={{ backgroundColor: '#F3E8CC', borderColor: '#E8D5A8' }}>
+            <h3 className="font-bold mb-2 uppercase text-xs tracking-wider flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
               <Clock className="w-4 h-4" /> Estado
             </h3>
-            <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+            <div className="inline-block px-3 py-1 rounded-full text-xs font-bold font-mono" style={{ backgroundColor: 'rgba(184,135,39,0.15)', color: '#B88727' }}>
               Pendiente
             </div>
-            <p className="text-sm text-gray-600 mt-4">
+            <p className="text-sm font-mono mt-4" style={{ color: '#3A2418' }}>
               <strong>Total:</strong> {formatPrice(order.total)}
             </p>
           </div>
@@ -106,8 +102,8 @@ export default async function OrderConfirmationPage({
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-block w-full sm:w-auto px-8 py-4 rounded-xl font-bold uppercase transition-transform hover:scale-105 mb-4 text-white"
-        style={{ backgroundColor: '#25D366' }} // WhatsApp color
+        className="inline-block w-full sm:w-auto px-8 py-4 rounded-2xl font-bold uppercase tracking-wider transition-transform hover:scale-105 mb-4 text-white shadow-md text-sm font-mono"
+        style={{ backgroundColor: '#25D366' }}
       >
         CONTACTAR POR WHATSAPP
       </a>
@@ -115,8 +111,8 @@ export default async function OrderConfirmationPage({
       <div className="mt-4">
         <Link 
           href="/"
-          className="font-medium underline underline-offset-4"
-          style={{ color: 'var(--brand-gray)' }}
+          className="font-mono text-xs font-bold underline"
+          style={{ color: '#65513F' }}
         >
           Volver al inicio
         </Link>

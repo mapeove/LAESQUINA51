@@ -2,14 +2,24 @@
 @import "tailwindcss";
 
 :root {
-  --brand-black: #0A0A0A;
-  --brand-yellow: #F5C500;
-  --brand-red: #CC2200;
-  --brand-cream: #F5EDD8;
-  --brand-gray: #1A1A1A;
-  --brand-gray-2: #2A2A2A;
-  --brand-text: #F0F0F0;
-  --brand-muted: #888888;
+  --paper: #F3E8CC;
+  --paper-light: #FFF7E5;
+  --brown: #442719;
+  --terracotta: #A94F2F;
+  --sage: #78866B;
+  --mustard: #B88727;
+  --text-primary: #3A2418;
+  --text-secondary: #65513F;
+
+  /* Legacy aliases aligned to Kraft Street Food identity */
+  --brand-black: #3A2418;
+  --brand-yellow: #B88727;
+  --brand-red: #A94F2F;
+  --brand-cream: #F3E8CC;
+  --brand-gray: #FFF7E5;
+  --brand-gray-2: #E8D5A8;
+  --brand-text: #3A2418;
+  --brand-muted: #65513F;
 }
 
 * {
@@ -19,11 +29,12 @@
 
 html {
   scroll-behavior: smooth;
+  background-color: var(--paper);
 }
 
 body {
-  background-color: var(--brand-black);
-  color: var(--brand-text);
+  background-color: var(--paper);
+  color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -39,10 +50,10 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Custom scrollbar for admin */
+/* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--brand-gray); }
-::-webkit-scrollbar-thumb { background: var(--brand-gray-2); border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb { background: var(--mustard); border-radius: 3px; }
 
 /* Animated underline */
 .animated-underline {
@@ -53,7 +64,7 @@ body {
   position: absolute;
   width: 0;
   height: 2px;
-  background: var(--brand-yellow);
+  background: var(--mustard);
   bottom: -2px;
   left: 0;
   transition: width 0.3s ease;
@@ -71,8 +82,8 @@ body {
 .animate-fade-up { animation: fadeUp 0.4s ease forwards; }
 
 @keyframes pulse-yellow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 197, 0, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(245, 197, 0, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(184, 135, 39, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(184, 135, 39, 0); }
 }
 .pulse-yellow { animation: pulse-yellow 2s infinite; }
 
@@ -81,7 +92,7 @@ body {
   100% { background-position: 200% 0; }
 }
 .skeleton {
-  background: linear-gradient(90deg, #1A1A1A 25%, #2A2A2A 50%, #1A1A1A 75%);
+  background: linear-gradient(90deg, #F3E8CC 25%, #FFF7E5 50%, #F3E8CC 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
