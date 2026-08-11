@@ -4,151 +4,165 @@ import { useState, useEffect } from 'react';
 import { X, Flame, ShoppingBag, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCart } from '@/features/cart/cart-context';
-import type { Promotion, Product } from '@/types';
-import { formatPrice } from '@/lib/utils';
 
-interface PromoModalProps {
-  promotion?: Promotion | null;
-  product?: Product | null;
+interface CampaignData {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  description: string | null;
+  media_type: 'IMAGE' | 'VIDEO';
+  image_url: string | null;
+  video_url: string | null;
+  promo_price: number | null;
+  button_text: string;
+  button_url: string;
+  display_frequency: 'ONCE_PER_SESSION' | 'ONCE_PER_DAY' | 'ALWAYS';
 }
 
-export function PromoModal({ promotion, product }: PromoModalProps) {
+interface PromoModalProps {
+  campaign?: CampaignData | null;
+}
+
+export function PromoModal({ campaign }: PromoModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { addItem } = useCart();
 
   useEffect(() => {
-    // Show once per session using sessionStorage
-    const hasSeenModal = sessionStorage.getItem('esquina51_promo_seen');
-    if (!hasSeenModal) {
-      // Delay slightly for smooth entrance
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-      }, 800);
+    if (!campaign) return;
+
+    const freq = campaign.display_frequency || 'ONCE_PER_SESSION';
+    let shouldShow = false;
+
+    if (freq === 'ALWAYS') {
+      shouldShow = true;
+    } else if (freq === 'ONCE_PER_SESSION') {
+      shouldShow = !sessionStorage.getItem('esquina51_promo_seen');
+    } else if (freq === 'ONCE_PER_DAY') {
+      const lastSeen = localStorage.getItem('esquina51_promo_date');
+      const today = new Date().toISOString().split('T')[0];
+      shouldShow = lastSeen !== today;
+    }
+
+    if (shouldShow) {
+      const timer = setTimeout(() => setIsOpen(true), 800);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [campaign]);
 
   const handleClose = () => {
-    sessionStorage.setItem('esquina51_promo_seen', 'true');
+    if (campaign) {
+      const freq = campaign.display_frequency || 'ONCE_PER_SESSION';
+      if (freq === 'ONCE_PER_SESSION') {
+        sessionStorage.setItem('esquina51_promo_seen', 'true');
+      } else if (freq === 'ONCE_PER_DAY') {
+        localStorage.setItem('esquina51_promo_date', new Date().toISOString().split('T')[0]);
+      }
+    }
     setIsOpen(false);
   };
 
-  const handleAddToCart = () => {
-    if (product) {
-      addItem({
-        product_id: product.id,
-        product_name: product.name,
-        product_price: promotion?.promo_price ?? product.price,
-        product_image: product.image,
-        quantity: 1,
-        selected_options: [],
-        selected_extras: [],
-        line_total: promotion?.promo_price ?? product.price,
-      });
-    }
-    handleClose();
-  };
+  if (!isOpen || !campaign) return null;
 
-  if (!isOpen) return null;
-
-  const title = promotion?.title || '🔥 EL BOX QUE ESTÁ ROMPIENDO LA ESQUINA';
-  const subtitle = promotion?.subtitle || '5 MINI BURGERS + PATATAS + SALSAS + COCA-COLA';
-  const price = promotion?.promo_price || 10.50;
-  const image = promotion?.image_url || product?.image || null;
+  const fmtPrice = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
+  const hasVideo = campaign.media_type === 'VIDEO' && campaign.video_url;
+  const hasImage = campaign.image_url;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-up">
       <div 
-        className="relative w-full max-w-lg rounded-3xl overflow-hidden border border-yellow-500/40 shadow-2xl"
-        style={{ backgroundColor: '#111111' }}
+        className="relative w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"
+        style={{ backgroundColor: '#FFF7E5', border: '2px solid #B88727' }}
       >
-        {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/60 text-neutral-300 hover:text-white hover:bg-black transition-colors border border-neutral-700"
-          aria-label="Cerrar ventana promocional"
+          className="absolute top-3 right-3 z-10 p-2 rounded-full transition-colors"
+          style={{ backgroundColor: 'rgba(58,36,24,0.7)', color: '#F3E8CC' }}
+          aria-label="Cerrar"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
-        {/* Promo Header Image / Placeholder */}
-        <div className="relative w-full h-56 md:h-64 bg-neutral-900 flex items-center justify-center overflow-hidden">
-          {image ? (
+        {/* Media section */}
+        <div className="relative w-full h-52 md:h-60 overflow-hidden" style={{ backgroundColor: '#F3E8CC' }}>
+          {hasVideo ? (
+            <video
+              src={campaign.video_url!}
+              autoPlay
+              muted
+              playsInline
+              loop
+              className="w-full h-full object-cover"
+            />
+          ) : hasImage ? (
             <Image
-              src={image}
-              alt={title}
+              src={campaign.image_url!}
+              alt={campaign.title}
               fill
-              className="object-cover hover:scale-105 transition-transform duration-500"
+              className="object-cover"
               sizes="(max-width: 768px) 100vw, 500px"
               priority
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-neutral-900 via-neutral-950 to-black flex flex-col items-center justify-center p-6 text-center">
-              <Flame className="w-16 h-16 text-yellow-500 mb-2 animate-bounce" />
-              <span className="font-mono text-xs uppercase tracking-widest text-yellow-400 font-bold">
-                OFERTA ESTRELLA LA ESQUINA 51
+            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center" style={{ backgroundColor: '#F3E8CC' }}>
+              <Flame className="w-14 h-14 mb-2 animate-bounce" style={{ color: '#B88727' }} />
+              <span className="font-mono text-xs uppercase tracking-widest font-bold" style={{ color: '#B88727' }}>
+                OFERTA ESTRELLA
+              </span>
+            </div>
+          )}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #FFF7E5, transparent 50%)' }} />
+        </div>
+
+        {/* Content */}
+        <div className="p-6 md:p-8 space-y-3 text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-mono" style={{ backgroundColor: 'rgba(184,135,39,0.15)', border: '1px solid rgba(184,135,39,0.3)', color: '#B88727' }}>
+            <Flame size={13} /> PROMOCIÓN DESTACADA
+          </div>
+
+          <h2 
+            className="text-xl md:text-2xl font-bold leading-tight uppercase tracking-wide"
+            style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}
+          >
+            {campaign.title}
+          </h2>
+
+          {campaign.subtitle && (
+            <p className="text-xs text-center font-medium" style={{ color: '#65513F' }}>
+              {campaign.subtitle}
+            </p>
+          )}
+
+          {campaign.description && (
+            <p className="text-xs" style={{ color: '#65513F' }}>
+              {campaign.description}
+            </p>
+          )}
+
+          {campaign.promo_price && (
+            <div className="pt-1">
+              <span className="text-[10px] uppercase tracking-widest block font-mono" style={{ color: '#65513F' }}>Precio Especial</span>
+              <span className="text-4xl font-bold tracking-tight font-mono" style={{ color: '#A94F2F' }}>
+                {fmtPrice(campaign.promo_price)}
               </span>
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-transparent" />
-        </div>
-
-        {/* Content */}
-        <div className="p-6 md:p-8 space-y-4 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-mono text-xs font-bold uppercase tracking-wider">
-            <Flame size={14} /> PROMOCIÓN DESTACADA
-          </div>
-
-          <h2 
-            className="text-2xl md:text-3xl font-bold leading-tight uppercase tracking-wide"
-            style={{ fontFamily: 'Oswald, sans-serif', color: 'var(--brand-cream)' }}
-          >
-            {title}
-          </h2>
-
-          <p className="text-xs md:text-sm text-neutral-300 max-w-sm mx-auto font-medium">
-            {subtitle}
-          </p>
-
-          <div className="pt-2">
-            <span className="text-xs text-neutral-400 uppercase tracking-widest block font-mono">Precio Especial</span>
-            <span 
-              className="text-4xl md:text-5xl font-bold tracking-tight font-mono text-yellow-500"
+          <div className="grid grid-cols-2 gap-3 pt-3">
+            <Link
+              href={campaign.button_url || '/menu'}
+              onClick={handleClose}
+              className="py-3 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg"
+              style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
             >
-              {formatPrice(price)}
-            </span>
-          </div>
-
-          {/* Action buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-4">
-            {product ? (
-              <button
-                onClick={handleAddToCart}
-                className="py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-yellow-500 text-black hover:bg-yellow-400 transition-transform active:scale-95 shadow-lg"
-                style={{ fontFamily: 'Oswald, sans-serif' }}
-              >
-                <ShoppingBag size={16} /> PEDIR AHORA
-              </button>
-            ) : (
-              <Link
-                href="/menu"
-                onClick={handleClose}
-                className="py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-yellow-500 text-black hover:bg-yellow-400 transition-transform active:scale-95 shadow-lg"
-                style={{ fontFamily: 'Oswald, sans-serif' }}
-              >
-                <ShoppingBag size={16} /> PEDIR AHORA
-              </Link>
-            )}
+              <ShoppingBag size={15} /> {campaign.button_text || 'PEDIR AHORA'}
+            </Link>
 
             <Link
               href="/menu"
               onClick={handleClose}
-              className="py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-neutral-800 text-neutral-200 border border-neutral-700 hover:bg-neutral-700 transition-all"
-              style={{ fontFamily: 'Oswald, sans-serif' }}
+              className="py-3 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+              style={{ backgroundColor: '#F3E8CC', color: '#3A2418', border: '1px solid #D4C4A0', fontFamily: 'Oswald, sans-serif' }}
             >
-              VER MENÚ <ArrowRight size={16} />
+              VER MENÚ <ArrowRight size={15} />
             </Link>
           </div>
         </div>

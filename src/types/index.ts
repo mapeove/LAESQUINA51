@@ -57,21 +57,30 @@ export interface DeliveryDriver {
   updated_at: string
 }
 
-// ---- Promotions --------------------------------------------
+// ---- Campaigns ---------------------------------------------
 
-export interface Promotion {
+export interface Campaign {
   id: string
   title: string
   subtitle: string | null
-  product_id: string | null
+  description: string | null
+  media_type: 'IMAGE' | 'VIDEO'
   image_url: string | null
+  video_url: string | null
+  product_id: string | null
   promo_price: number | null
+  button_text: string
+  button_url: string
   active: boolean
   show_modal: boolean
   show_home: boolean
+  show_menu: boolean
   start_date: string | null
   end_date: string | null
+  priority: number
+  display_frequency: 'ONCE_PER_SESSION' | 'ONCE_PER_DAY' | 'ALWAYS'
   created_at: string
+  updated_at: string
   product?: Product
 }
 
@@ -96,8 +105,11 @@ export interface Product {
   name: string
   slug: string
   description: string | null
+  short_description?: string | null
   price: number
   image: string | null
+  image_url?: string | null
+  video_url?: string | null
   active: boolean
   featured: boolean
   sort_order: number
@@ -257,7 +269,8 @@ export interface Profile {
 export interface AdminUser {
   id: string
   user_id: string
-  role: 'admin' | 'staff'
+  role: 'OWNER' | 'admin' | 'staff'
+  active: boolean
   created_at: string
 }
 

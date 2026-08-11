@@ -19,36 +19,35 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error || !data.user) {
-        setError('Credenciales incorrectas o acceso no autorizado');
+      if (authError || !data.user) {
+        setError('Credenciales incorrectas. Verifica tu correo y contraseña.');
         setLoading(false);
         return;
       }
 
-      // Check if user is registered in admin_users
+      // Check admin_users table for OWNER role + active
       const { data: adminRecord } = await supabase
         .from('admin_users')
-        .select('id, role')
+        .select('id, role, active')
         .eq('user_id', data.user.id)
         .single();
 
-      if (!adminRecord) {
+      if (!adminRecord || !adminRecord.active) {
         await supabase.auth.signOut();
-        setError('Acceso denegado: Tu usuario no posee permisos de administración');
+        setError('Credenciales incorrectas. Verifica tu correo y contraseña.');
         setLoading(false);
         return;
       }
 
       router.push('/administrador');
       router.refresh();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al iniciar sesión';
-      setError(msg);
+    } catch {
+      setError('Error al iniciar sesión. Inténtalo de nuevo.');
       setLoading(false);
     }
   };
@@ -56,33 +55,33 @@ export default function AdminLoginPage() {
   return (
     <div 
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ backgroundColor: '#0A0A0A' }}
+      style={{ backgroundColor: '#F3E8CC' }}
     >
-      <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-8 text-white">
+      <div className="w-full max-w-sm rounded-2xl shadow-2xl p-8" style={{ backgroundColor: '#FFF7E5', border: '1px solid #E8D5A8' }}>
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-yellow-500/10 text-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-yellow-500/20">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(184,135,39,0.15)', border: '1px solid rgba(184,135,39,0.3)' }}>
+            <ShieldCheck className="w-6 h-6" style={{ color: '#B88727' }} />
           </div>
           <h1 
-            className="text-3xl font-bold font-mono tracking-wider mb-1"
-            style={{ color: 'var(--brand-yellow)' }}
+            className="text-3xl font-bold tracking-wider mb-1"
+            style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}
           >
             LA ESQUINA 51
           </h1>
-          <h2 className="text-sm font-semibold text-neutral-400 uppercase tracking-widest">
+          <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#65513F' }}>
             Panel de Administración
           </h2>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
           {error && (
-            <div className="p-4 bg-red-950/60 border border-red-900 text-red-300 rounded-xl text-xs font-medium">
+            <div className="p-3 rounded-xl text-xs font-medium" style={{ backgroundColor: 'rgba(169,79,47,0.1)', border: '1px solid rgba(169,79,47,0.3)', color: '#A94F2F' }}>
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: '#65513F' }}>
               Correo Electrónico
             </label>
             <input
@@ -90,13 +89,14 @@ export default function AdminLoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm"
+              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
+              style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
               placeholder="admin@laesquina51.es"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: '#65513F' }}>
               Contraseña
             </label>
             <input
@@ -104,7 +104,8 @@ export default function AdminLoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-500 text-sm"
+              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
+              style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
               placeholder="••••••••"
             />
           </div>
@@ -112,8 +113,8 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl font-bold text-black transition-all disabled:opacity-50 mt-2"
-            style={{ backgroundColor: 'var(--brand-yellow)', fontFamily: 'Oswald, sans-serif' }}
+            className="w-full py-3.5 rounded-xl font-bold transition-all disabled:opacity-50 mt-2"
+            style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}
           >
             {loading ? 'VERIFICANDO...' : 'INICIAR SESIÓN'}
           </button>

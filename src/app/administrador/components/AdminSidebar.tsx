@@ -8,7 +8,7 @@ import {
   ClipboardList, 
   UtensilsCrossed, 
   Tag, 
-  Flame, 
+  Megaphone, 
   Truck, 
   Clock, 
   MapPin, 
@@ -24,7 +24,7 @@ const links = [
   { name: 'Pedidos', href: '/administrador/pedidos', icon: ClipboardList },
   { name: 'Productos', href: '/administrador/productos', icon: UtensilsCrossed },
   { name: 'Categorías', href: '/administrador/categorias', icon: Tag },
-  { name: 'Promociones', href: '/administrador/promociones', icon: Flame },
+  { name: 'Publicidad', href: '/administrador/publicidad', icon: Megaphone },
   { name: 'Repartidores', href: '/administrador/repartidores', icon: Truck },
   { name: 'Horarios', href: '/administrador/horarios', icon: Clock },
   { name: 'Zonas', href: '/administrador/zonas', icon: MapPin },
@@ -46,34 +46,38 @@ export function AdminSidebar() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-neutral-900 border-b border-neutral-800 z-50 flex items-center justify-between px-4">
-        <span className="font-bold text-lg text-yellow-500 font-mono">LA ESQUINA 51</span>
-        <button onClick={() => setIsOpen(!isOpen)} className="text-white p-2">
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 z-50 flex items-center justify-between px-4" style={{ backgroundColor: '#3A2418' }}>
+        <div>
+          <span className="font-bold text-sm tracking-wider" style={{ fontFamily: 'Oswald, sans-serif', color: '#F3E8CC' }}>LA ESQUINA 51</span>
+          <span className="block text-[9px] font-mono tracking-widest" style={{ color: '#B88727' }}>ADMINISTRADOR</span>
+        </div>
+        <button onClick={() => setIsOpen(!isOpen)} className="p-2" style={{ color: '#F3E8CC' }}>
+          {isOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {/* Overlay */}
       {isOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/70 z-40"
+          className="md:hidden fixed inset-0 bg-black/60 z-40"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 h-full w-64 bg-neutral-900 border-r border-neutral-800 text-white z-40
-        transition-transform duration-300 ease-in-out flex flex-col
+        fixed top-0 left-0 h-full w-60 z-40
+        transition-transform duration-300 ease-in-out flex flex-col border-r
         md:translate-x-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="h-16 hidden md:flex items-center justify-center border-b border-neutral-800">
-          <span className="text-yellow-500 font-bold text-xl uppercase tracking-wider font-mono">La Esquina 51</span>
+      `} style={{ backgroundColor: '#3A2418', borderColor: '#65513F' }}>
+        <div className="h-14 hidden md:flex flex-col items-center justify-center border-b" style={{ borderColor: '#65513F' }}>
+          <span className="font-bold text-base uppercase tracking-wider" style={{ fontFamily: 'Oswald, sans-serif', color: '#F3E8CC' }}>La Esquina 51</span>
+          <span className="text-[9px] font-mono tracking-widest" style={{ color: '#B88727' }}>PANEL ADMINISTRADOR</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4">
-          <nav className="space-y-1 px-3">
+        <div className="flex-1 overflow-y-auto py-3">
+          <nav className="space-y-0.5 px-2">
             {links.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href || (link.href !== '/administrador' && pathname.startsWith(link.href));
@@ -82,13 +86,16 @@ export function AdminSidebar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
-                    isActive 
-                      ? 'bg-yellow-500 text-black font-bold' 
-                      : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
-                  }`}
+                  className="flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors"
+                  style={
+                    isActive
+                      ? { backgroundColor: '#B88727', color: '#3A2418', fontWeight: 700 }
+                      : { color: '#F3E8CC' }
+                  }
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = '#65513F'; }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <Icon size={18} />
+                  <Icon size={17} />
                   <span>{link.name}</span>
                 </Link>
               );
@@ -96,19 +103,22 @@ export function AdminSidebar() {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-neutral-800">
+        <div className="p-3 border-t" style={{ borderColor: '#65513F' }}>
           <button
             onClick={handleLogout}
-            className="flex items-center space-x-3 w-full px-4 py-2.5 text-red-400 hover:bg-red-950/40 hover:text-red-300 rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center space-x-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            style={{ color: '#A94F2F' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(169,79,47,0.15)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            <LogOut size={18} />
+            <LogOut size={17} />
             <span>Cerrar Sesión</span>
           </button>
         </div>
       </aside>
 
       {/* Mobile spacing block */}
-      <div className="h-16 md:hidden" />
+      <div className="h-14 md:hidden" />
     </>
   );
 }

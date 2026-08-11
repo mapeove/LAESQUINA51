@@ -4,7 +4,8 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Permanent redirect for legacy /admin or /Administrador (strict boundary check)
+  // 1. Permanent redirect for legacy /admin or uppercase /Administrador routes
+  // Use exact boundary checks so /administrador doesn't match /admin prefix
   if (
     pathname === '/admin' ||
     pathname.startsWith('/admin/') ||
@@ -25,7 +26,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. Fail-safe protection for /administrador routes
+  // 3. Server-side protection for /administrador/* routes
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -52,6 +53,7 @@ export async function middleware(request: NextRequest) {
       },
     });
 
+    // Check 1: Valid session & user present
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -62,14 +64,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Verify user is in admin_users table
+    // Check 2: User exists in admin_users with active=true
     const { data: adminRecord } = await supabase
       .from('admin_users')
-      .select('id')
+      .select('id, role, active')
       .eq('user_id', user.id)
       .single();
 
-    if (!adminRecord) {
+    if (!adminRecord || !adminRecord.active) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/administrador/login';
       return NextResponse.redirect(loginUrl);
@@ -77,7 +79,7 @@ export async function middleware(request: NextRequest) {
 
     return supabaseResponse;
   } catch (err: unknown) {
-    console.error('[Middleware Error] Administrador auth check failed:', err);
+    console.error('[Middleware Error] Admin auth check failed:', err);
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/administrador/login';
     return NextResponse.redirect(loginUrl);

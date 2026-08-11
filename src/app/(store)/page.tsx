@@ -5,7 +5,7 @@ import { Flame, ShoppingBag, MapPin, Clock, ArrowRight, Star } from 'lucide-reac
 import { formatPrice } from '@/lib/utils';
 import { PromoModal } from '@/components/promo/PromoModal';
 import { StickyCartBar } from '@/components/cart/StickyCartBar';
-import type { Product, Category, Promotion } from '@/types';
+import type { Product, Category, Campaign } from '@/types';
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -19,7 +19,7 @@ export default async function HomePage() {
     { data: hoursData },
     { data: zonesData }
   ] = await Promise.all([
-    supabase.from('promotions').select('*').eq('active', true).eq('show_home', true).order('created_at', { ascending: false }).limit(1),
+    supabase.from('campaigns').select('*').eq('active', true).eq('show_modal', true).order('priority', { ascending: false }).limit(1),
     supabase.from('categories').select('*').eq('active', true).order('sort_order', { ascending: true }),
     supabase.from('products').select('*, category:categories(*)').eq('active', true).order('sort_order', { ascending: true }),
     supabase.from('store_settings').select('*'),
@@ -27,7 +27,7 @@ export default async function HomePage() {
     supabase.from('delivery_zones').select('*').eq('active', true).order('name', { ascending: true })
   ]);
 
-  const activePromo: Promotion | null = (promoData && promoData[0]) ? promoData[0] : null;
+  const activeCampaign: Campaign | null = (promoData && promoData[0]) ? promoData[0] as Campaign : null;
 
   // Fallback fallback categories & products if DB empty
   const categories: Category[] = (categoriesData && categoriesData.length > 0) ? categoriesData : [
@@ -47,7 +47,7 @@ export default async function HomePage() {
   ];
 
   const featuredProducts = products.filter(p => p.featured);
-  const promoProduct = activePromo?.product_id ? products.find(p => p.id === activePromo.product_id) : products.find(p => p.slug === 'el-box-mini-monster');
+  const promoProduct = activeCampaign?.product_id ? products.find(p => p.id === activeCampaign.product_id) : products.find(p => p.slug === 'el-box-mini-monster');
 
   const storeOpenSetting = settingsData?.find(s => s.key === 'store_open');
   const isStoreOpen = storeOpenSetting ? storeOpenSetting.value === 'true' : true;
@@ -55,7 +55,7 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen pb-24 text-white bg-[#0A0A0A] font-sans selection:bg-yellow-500 selection:text-black">
       {/* Promo Modal Component */}
-      <PromoModal promotion={activePromo} product={promoProduct} />
+      <PromoModal campaign={activeCampaign} />
 
       {/* Floating Sticky Cart Bar */}
       <StickyCartBar />
