@@ -3,9 +3,9 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.laesquina51.app',
   appName: 'La Esquina 51',
-  webDir: 'public',
+  webDir: 'capacitor-shell',
   server: {
-    url: 'https://laesquina51.es',
+    url: 'https://www.laesquina51.es',
     cleartext: false
   },
   android: {
