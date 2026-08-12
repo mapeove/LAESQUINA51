@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
 
 export default function AdminLoginPage() {
@@ -10,7 +9,6 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -18,38 +16,66 @@ export default function AdminLoginPage() {
     setError('');
     setLoading(true);
 
+    const timeoutMs = 15000;
+    
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError || !data.user) {
-        setError('Credenciales incorrectas. Verifica tu correo y contraseña.');
-        setLoading(false);
-        return;
+      await Promise.race([
+        executeLoginFlow(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
+        )
+      ]);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'TIMEOUT') {
+        setError('La conexión está tardando demasiado. Comprueba tu conexión e inténtalo nuevamente.');
+      } else if (err instanceof Error) {
+        setError(err.message || 'Error al iniciar sesión. Inténtalo de nuevo.');
+      } else {
+        setError('Error al iniciar sesión. Inténtalo de nuevo.');
       }
-
-      // Check admin_users table for OWNER role + active
-      const { data: adminRecord } = await supabase
-        .from('admin_users')
-        .select('id, role, active')
-        .eq('user_id', data.user.id)
-        .single();
-
-      if (!adminRecord || !adminRecord.active) {
-        await supabase.auth.signOut();
-        setError('Credenciales incorrectas. Verifica tu correo y contraseña.');
-        setLoading(false);
-        return;
-      }
-
-      router.push('/administrador');
-      router.refresh();
-    } catch {
-      setError('Error al iniciar sesión. Inténtalo de nuevo.');
       setLoading(false);
     }
+  };
+
+  const executeLoginFlow = async () => {
+    // ETAPA A: Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError || !authData?.user) {
+      throw new Error('Credenciales incorrectas. Verifica tu correo y contraseña.');
+    }
+
+    // ETAPA C: Verify admin_users (skip redundant ETAPA B getUser since authData already has user)
+    const { data: adminRecord, error: adminError } = await supabase
+      .from('admin_users')
+      .select('id, role, active')
+      .eq('user_id', authData.user.id)
+      .single();
+
+    if (adminError || !adminRecord) {
+      await supabase.auth.signOut();
+      throw new Error('No se pudo verificar la cuenta de administrador.');
+    }
+
+    // ETAPA D: Verify role and active status
+    if (adminRecord.role !== 'OWNER' && adminRecord.role !== 'admin') {
+      await supabase.auth.signOut();
+      throw new Error('Esta cuenta no tiene permisos de administrador.');
+    }
+
+    if (!adminRecord.active) {
+      await supabase.auth.signOut();
+      throw new Error('La cuenta de administrador está desactivada.');
+    }
+
+    // ETAPA E: Redirect robustly. 
+    // Using hard navigation ensures cookies are explicitly sent to the server proxy
+    // and completely prevents Next.js client-side router infinite loops if rejected.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.assign('/administrador');
   };
 
   return (
