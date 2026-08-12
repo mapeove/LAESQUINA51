@@ -13,7 +13,8 @@ import {
   Plus, 
   Megaphone,
   AlertTriangle,
-  Settings
+  Settings,
+  ChevronRight
 } from 'lucide-react';
 
 interface DashboardOrder {
@@ -166,7 +167,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Recent Orders */}
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#FFF7E5', border: '1px solid #E8D5A8' }}>
+      <div className="rounded-2xl overflow-hidden flex flex-col" style={{ backgroundColor: '#FFF7E5', border: '1px solid #E8D5A8' }}>
         <div className="p-4 flex justify-between items-center" style={{ borderBottom: '1px solid #E8D5A8' }}>
           <h2 className="text-base font-bold font-mono" style={{ color: '#3A2418' }}>Pedidos Recientes</h2>
           <Link href="/administrador/pedidos" className="text-xs font-bold hover:underline" style={{ color: '#B88727' }}>
@@ -174,7 +175,48 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Cards View */}
+        <div className="md:hidden flex flex-col p-4 gap-3">
+          {loading ? (
+            <div className="text-center py-8 text-xs font-medium" style={{ color: '#65513F' }}>Cargando...</div>
+          ) : recentOrders.length === 0 ? (
+            <div className="text-center py-8 text-xs font-medium" style={{ color: '#65513F' }}>No hay pedidos registrados aún.</div>
+          ) : (
+            recentOrders.map((order) => (
+              <Link 
+                href={`/administrador/pedidos?id=${order.id}`}
+                key={order.id} 
+                className="p-4 rounded-xl flex flex-col gap-3 transition-colors active:bg-[#F3E8CC]/50"
+                style={{ backgroundColor: '#fff', border: '1px solid #E8D5A8' }}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-mono font-bold text-sm" style={{ color: '#B88727' }}>
+                      #{order.order_number}
+                    </div>
+                    <div className="text-xs font-semibold mt-0.5" style={{ color: '#3A2418' }}>{order.customer_name}</div>
+                    <div className="text-[10px] font-mono mt-0.5" style={{ color: '#65513F' }}>{order.customer_phone}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-mono font-bold text-base" style={{ color: '#3A2418' }}>{fmtPrice(order.total)}</div>
+                    <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" style={{ backgroundColor: '#F3E8CC', color: '#65513F' }}>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-[#E8D5A8]/50">
+                  <span className="px-2 py-0.5 rounded font-bold text-[10px] uppercase tracking-wider" style={order.payment_method === 'BIZUM' ? { backgroundColor: 'rgba(120,134,107,0.15)', color: '#78866B' } : { backgroundColor: 'rgba(184,135,39,0.15)', color: '#B88727' }}>
+                    {order.payment_method}
+                  </span>
+                  <span className="text-xs font-bold" style={{ color: '#B88727' }}>Ver <ChevronRight size={14} className="inline" /></span>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-[10px] uppercase tracking-wider" style={{ color: '#65513F', borderBottom: '1px solid #E8D5A8' }}>
@@ -192,7 +234,7 @@ export default function AdminDashboardPage() {
                 <tr><td colSpan={5} className="text-center py-8 text-xs" style={{ color: '#65513F' }}>No hay pedidos registrados aún.</td></tr>
               ) : (
                 recentOrders.map((order) => (
-                  <tr key={order.id} style={{ borderBottom: '1px solid #E8D5A8' }} className="last:border-0">
+                  <tr key={order.id} style={{ borderBottom: '1px solid #E8D5A8' }} className="last:border-0 hover:bg-[#FFF] transition-colors">
                     <td className="px-4 py-3 font-mono font-bold text-sm" style={{ color: '#B88727' }}>
                       <Link href={`/administrador/pedidos?id=${order.id}`} className="hover:underline">
                         #{order.order_number}

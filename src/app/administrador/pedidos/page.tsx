@@ -194,11 +194,68 @@ function AdminOrdersContent() {
         ))}
       </div>
 
-      {/* Orders Table */}
-      <div className="flex-1 rounded-2xl border border-neutral-800 overflow-hidden flex flex-col bg-neutral-900">
-        <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left border-collapse">
-            <thead>
+      {/* Orders List (Responsive) */}
+      <div className="flex-1 rounded-2xl border border-neutral-800 bg-neutral-900 flex flex-col overflow-hidden">
+        
+        {/* Mobile Cards View */}
+        <div className="md:hidden overflow-y-auto flex-1 p-4 space-y-4">
+          {loading ? (
+            <div className="text-center text-neutral-500 py-8 font-medium text-sm">Cargando pedidos...</div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="text-center text-neutral-500 py-8 font-medium text-sm">No hay pedidos en esta sección.</div>
+          ) : (
+            filteredOrders.map((order) => (
+              <div 
+                key={order.id}
+                onClick={() => setSelectedOrder(order)}
+                className={`bg-neutral-800/40 border rounded-xl p-4 flex flex-col gap-3 cursor-pointer transition-colors ${
+                  selectedOrder?.id === order.id ? 'border-yellow-500/50 bg-neutral-800' : 'border-neutral-800'
+                } ${highlightedOrderId === order.id ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.15)]' : ''}`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-mono font-bold text-yellow-500 text-lg flex items-center gap-2">
+                      #{order.order_number}
+                      {highlightedOrderId === order.id && (
+                        <span className="px-1.5 py-0.5 bg-orange-600 text-white text-[9px] rounded-sm font-sans uppercase animate-pulse">
+                          Nuevo
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-neutral-400 mt-0.5">
+                      {new Date(order.created_at).toLocaleString('es-ES', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-mono font-bold text-lg text-white">{formatPrice(order.total)}</div>
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      ORDER_STATUS_COLORS[order.status] ?? 'bg-neutral-800 text-neutral-300'
+                    }`}>
+                      {ORDER_STATUS_LABELS[order.status] ?? order.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-neutral-800/50 flex justify-between items-end">
+                  <div>
+                    <div className="font-bold text-neutral-200 text-sm">{order.customer_name}</div>
+                    <div className="text-xs font-mono text-neutral-400">{order.customer_phone}</div>
+                  </div>
+                  <button className="flex items-center gap-1 text-xs font-bold text-yellow-500 hover:text-yellow-400 transition-colors">
+                    VER PEDIDO <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:flex overflow-x-auto flex-1">
+          <table className="w-full text-left border-collapse h-fit">
+            <thead className="sticky top-0 bg-neutral-900 z-10 shadow-sm">
               <tr className="text-xs text-neutral-400 uppercase tracking-wider border-b border-neutral-800">
                 <th className="px-6 py-4 font-medium">Número</th>
                 <th className="px-6 py-4 font-medium">Fecha/Hora</th>
