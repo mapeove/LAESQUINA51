@@ -60,6 +60,7 @@ export default function AdminProductsPage() {
     sort_order: 0,
   });
 
+  const [newlyUploadedFiles, setNewlyUploadedFiles] = useState<string[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
@@ -167,10 +168,40 @@ export default function AdminProductsPage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
+    setSaveError(null);
   };
+
+  const handleCancel = async () => {
+    if (newlyUploadedFiles.length > 0) {
+      try {
+        const filePaths = newlyUploadedFiles.map(url => {
+          const parts = url.split('/');
+          return parts.slice(parts.indexOf('product-media') + 1).join('/');
+        }).filter(path => path);
+        
+        if (filePaths.length > 0) {
+          await supabase.storage.from('product-media').remove(filePaths);
+        }
+      } catch (err) {
+        console.error("Error cleaning up files:", err);
+      }
+      setNewlyUploadedFiles([]);
+    }
+    closeModal();
+  };
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploadingMedia) {
+      setSaveError("Espera a que terminen de subir los archivos multimedia.");
+      return;
+    }
+    
+    setSaveError(null);
+    setIsSaving(true);
     
     let finalSlug = formData.slug;
     if (!finalSlug) {
@@ -180,16 +211,35 @@ export default function AdminProductsPage() {
     const payload = {
       ...formData,
       slug: finalSlug,
+      sort_order: Number(formData.sort_order) || 0,
+      price: Number(formData.price) || 0
     };
 
-    if (editingProduct) {
-      await supabase.from('products').update(payload).eq('id', editingProduct.id);
-    } else {
-      await supabase.from('products').insert([payload]);
+    try {
+      let res;
+      if (editingProduct) {
+        res = await supabase.from('products').update(payload).eq('id', editingProduct.id);
+      } else {
+        res = await supabase.from('products').insert([payload]);
+      }
+      
+      if (res.error) {
+        console.error("Supabase Error:", res.error);
+        setSaveError(res.error.message || "Error al guardar en la base de datos.");
+        setIsSaving(false);
+        return;
+      }
+      
+      setNewlyUploadedFiles([]);
+      closeModal();
+      reloadData();
+    } catch (err: unknown) {
+      console.error("Unexpected Error:", err);
+      const errorMessage = err instanceof Error ? err.message : 'Ocurrió un error inesperado al guardar.';
+      setSaveError(errorMessage);
+    } finally {
+      setIsSaving(false);
     }
-    
-    closeModal();
-    reloadData();
   };
 
   const handleDelete = async (id: string) => {
@@ -414,7 +464,8 @@ export default function AdminProductsPage() {
                 {editingProduct ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}
               </h2>
               <button 
-                onClick={closeModal}
+                type="button"
+                onClick={handleCancel}
                 className="text-neutral-400 hover:text-white transition-colors p-2 -mr-2"
               >
                 <X className="w-6 h-6" />
@@ -514,7 +565,10 @@ export default function AdminProductsPage() {
                       label="Imagen Principal"
                       type="image"
                       currentUrl={formData.image_url || formData.image || ''}
-                      onUploadSuccess={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                      onUploadSuccess={(url) => {
+                        setFormData(prev => ({ ...prev, image_url: url }));
+                        setNewlyUploadedFiles(prev => [...prev, url]);
+                      }}
                       onRemove={() => setFormData(prev => ({ ...prev, image_url: '', image: '' }))}
                       isUploading={isUploadingMedia}
                       setIsUploading={setIsUploadingMedia}
@@ -524,7 +578,10 @@ export default function AdminProductsPage() {
                       label="Imagen Secundaria"
                       type="image"
                       currentUrl={formData.secondary_image_url || ''}
-                      onUploadSuccess={(url) => setFormData(prev => ({ ...prev, secondary_image_url: url }))}
+                      onUploadSuccess={(url) => {
+                        setFormData(prev => ({ ...prev, secondary_image_url: url }));
+                        setNewlyUploadedFiles(prev => [...prev, url]);
+                      }}
                       onRemove={() => setFormData(prev => ({ ...prev, secondary_image_url: '' }))}
                       isUploading={isUploadingMedia}
                       setIsUploading={setIsUploadingMedia}
@@ -535,7 +592,10 @@ export default function AdminProductsPage() {
                         label="Video del Producto"
                         type="video"
                         currentUrl={formData.video_url || ''}
-                        onUploadSuccess={(url) => setFormData(prev => ({ ...prev, video_url: url }))}
+                        onUploadSuccess={(url) => {
+                          setFormData(prev => ({ ...prev, video_url: url }));
+                          setNewlyUploadedFiles(prev => [...prev, url]);
+                        }}
                         onRemove={() => setFormData(prev => ({ ...prev, video_url: '' }))}
                         isUploading={isUploadingMedia}
                         setIsUploading={setIsUploadingMedia}
@@ -591,21 +651,28 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Footer Sticky */}
-              <div className="flex gap-4 p-4 md:p-6 border-t border-neutral-800 bg-neutral-900 shrink-0 md:rounded-b-xl">
-                <button 
-                  type="button"
-                  onClick={closeModal}
-                  className="flex-1 md:flex-none px-6 py-3 rounded-lg font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  disabled={isUploadingMedia}
-                  className="flex-1 md:flex-none px-6 py-3 rounded-lg font-bold bg-yellow-500 hover:bg-yellow-600 text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isUploadingMedia ? 'Subiendo...' : 'Guardar Producto'}
-                </button>
+              <div className="flex flex-col gap-4 p-4 md:p-6 border-t border-neutral-800 bg-neutral-900 shrink-0 md:rounded-b-xl">
+                {saveError && (
+                  <div className="bg-red-950/50 border border-red-900/50 text-red-400 p-3 rounded-lg text-sm font-medium">
+                    {saveError}
+                  </div>
+                )}
+                <div className="flex gap-4">
+                  <button 
+                    type="button"
+                    onClick={handleCancel}
+                    className="flex-1 md:flex-none px-6 py-3 rounded-lg font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={isUploadingMedia || isSaving}
+                    className="flex-1 md:flex-none px-6 py-3 rounded-lg font-bold bg-yellow-500 hover:bg-yellow-600 text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUploadingMedia ? 'Subiendo...' : isSaving ? 'Guardando...' : 'Guardar Producto'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
