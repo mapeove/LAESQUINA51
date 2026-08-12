@@ -44,8 +44,8 @@ yarn-error.log*
 next-env.d.ts
 
 # Android / Capacitor
-android/
-ios/
+# android/ (now versioned per requirements)
+# ios/
 *.keystore
 *.jks
 *.aab
