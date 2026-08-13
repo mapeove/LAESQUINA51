@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useCart } from '@/features/cart/cart-context';
 import { formatPrice } from '@/lib/utils';
 import type { Product } from '@/types';
+import { createClient } from '@/lib/supabase/client';
 
 interface ProductModalProps {
   product: Product;
@@ -13,10 +14,22 @@ interface ProductModalProps {
 
 export function ProductModal({ product, onClose }: ProductModalProps) {
   const [quantity, setQuantity] = useState(1);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
+  const supabase = createClient();
   
-  const handleAddToCart = () => {
-    if (product.sold_out) return;
+  const handleAddToCart = async () => {
+    if (product.sold_out || isAdding) return;
+    setIsAdding(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      setShowLoginPrompt(true);
+      setIsAdding(false);
+      return;
+    }
     
     const prodImg = product.image_url || product.image || null;
     addItem({
@@ -30,11 +43,31 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
       line_total: product.price * quantity,
     });
     
-    // Optional: show some feedback before closing?
-    // The prompt says "Mostrar confirmación: ¡Añadido al pedido!"
-    // For now we'll just close it, the StickyCartBar updates automatically.
+    setIsAdding(false);
     onClose();
   };
+
+  if (showLoginPrompt) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/70 backdrop-blur-sm animate-fade-up">
+        <div className="w-full md:max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92dvh] border p-6 text-center" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
+          <h2 className="text-2xl font-bold mb-4 uppercase" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>Iniciar Sesión</h2>
+          <p className="mb-6 text-sm" style={{ color: '#65513F' }}>Necesitas iniciar sesión o crear una cuenta para agregar productos al carrito y realizar pedidos.</p>
+          <div className="flex flex-col gap-3">
+            <a href="/login" className="w-full py-4 rounded-2xl font-bold text-base transition-transform active:scale-95 shadow-lg uppercase" style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
+              Iniciar Sesión
+            </a>
+            <a href="/registro" className="w-full py-4 rounded-2xl font-bold text-base transition-transform active:scale-95 shadow-sm uppercase border" style={{ backgroundColor: '#FFF7E5', borderColor: '#D4C4A0', color: '#3A2418', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
+              Crear Cuenta
+            </a>
+            <button onClick={() => setShowLoginPrompt(false)} className="mt-2 text-sm font-bold uppercase underline" style={{ color: '#65513F' }}>
+              Volver
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -91,7 +124,7 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t flex flex-col gap-4 pb-8 md:pb-5" style={{ backgroundColor: '#F3E8CC', borderColor: '#E8D5A8' }}>
+        <div className="p-5 border-t flex flex-col gap-4" style={{ backgroundColor: '#F3E8CC', borderColor: '#E8D5A8', paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
           {/* Quantity */}
           <div className="flex items-center justify-center gap-5">
             <button
@@ -113,12 +146,12 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
 
           <button
             onClick={handleAddToCart}
-            disabled={product.sold_out}
+            disabled={product.sold_out || isAdding}
             className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-between px-6 transition-transform active:scale-95 shadow-lg uppercase disabled:opacity-50"
             style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}
           >
-            <span>{product.sold_out ? 'AGOTADO' : 'AÑADIR AL PEDIDO'}</span>
-            {!product.sold_out && <span className="font-mono">{formatPrice(product.price * quantity)}</span>}
+            <span>{isAdding ? 'VERIFICANDO...' : (product.sold_out ? 'AGOTADO' : 'AÑADIR AL PEDIDO')}</span>
+            {(!product.sold_out && !isAdding) && <span className="font-mono">{formatPrice(product.price * quantity)}</span>}
           </button>
         </div>
       </div>

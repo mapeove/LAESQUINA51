@@ -10,8 +10,35 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState<string | null>(null);
+
   const router = useRouter();
   const supabase = createClient();
+
+  const handleRecovery = async () => {
+    if (!recoveryEmail) {
+      setError('Introduce tu email para recuperar la contraseña.');
+      return;
+    }
+    setRecoveryLoading(true);
+    setError(null);
+    setRecoveryMessage(null);
+
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(recoveryEmail, {
+      redirectTo: 'https://www.laesquina51.es/restablecer-contrasena',
+    });
+
+    if (resetError) {
+      setError('Hubo un error al procesar tu solicitud.');
+    } else {
+      setRecoveryMessage('Si la cuenta existe, recibirás un correo con las instrucciones.');
+    }
+    setRecoveryLoading(false);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,13 +102,60 @@ export default function LoginPage() {
 
           <button 
             type="submit" 
-            disabled={loading}
+            disabled={loading || showRecovery}
             className="w-full py-4 rounded-xl font-bold uppercase text-sm transition-colors shadow-sm disabled:opacity-50"
             style={{ backgroundColor: '#A94F2F', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+
+        {!showRecovery ? (
+          <div className="mt-4 text-center">
+            <button 
+              onClick={() => setShowRecovery(true)}
+              className="text-xs uppercase font-bold underline"
+              style={{ color: '#A94F2F' }}
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 p-4 rounded-lg border text-center" style={{ backgroundColor: '#F3E8CC', borderColor: '#D4C4A0' }}>
+            <h3 className="text-sm font-bold uppercase mb-2" style={{ color: '#3A2418' }}>Recuperar Contraseña</h3>
+            <p className="text-xs mb-3" style={{ color: '#65513F' }}>Enviaremos un enlace de recuperación a tu correo.</p>
+            {recoveryMessage && (
+              <div className="p-2 mb-3 text-xs rounded bg-green-100 text-green-800 border border-green-200">
+                {recoveryMessage}
+              </div>
+            )}
+            <input 
+              type="email" 
+              value={recoveryEmail}
+              onChange={(e) => setRecoveryEmail(e.target.value)}
+              className="w-full p-2 mb-3 rounded border text-xs outline-none"
+              placeholder="tu@email.com"
+              style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}
+            />
+            <div className="flex gap-2">
+              <button 
+                onClick={handleRecovery}
+                disabled={recoveryLoading}
+                className="flex-1 py-2 rounded text-xs font-bold uppercase disabled:opacity-50"
+                style={{ backgroundColor: '#B88727', color: '#FFF7E5' }}
+              >
+                {recoveryLoading ? 'Enviando...' : 'Enviar Enlace'}
+              </button>
+              <button 
+                onClick={() => { setShowRecovery(false); setRecoveryMessage(null); }}
+                className="flex-1 py-2 rounded border text-xs font-bold uppercase"
+                style={{ backgroundColor: '#FFF7E5', borderColor: '#D4C4A0', color: '#3A2418' }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 text-center text-sm font-mono" style={{ color: '#65513F' }}>
           ¿No tienes cuenta?{' '}

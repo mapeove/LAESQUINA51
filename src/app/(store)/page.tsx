@@ -51,8 +51,8 @@ export default async function HomePage() {
 
   const pCasiTriple = products.find(p => p.slug === 'la-casi-triple');
   const pAmarreArabe = products.find(p => p.slug === 'el-amarre-arabe');
-  const pGhostesco = products.find(p => p.slug === 'el-ghostesco');
   const pIncondicional = products.find(p => p.slug === 'la-incondicional');
+  const pGhosteo = products.find(p => p.slug === 'el-ghosteo');
 
   const storeOpenSetting = settingsData?.find(s => s.key === 'store_open');
   const isStoreOpen = storeOpenSetting ? storeOpenSetting.value === 'true' : true;
@@ -122,8 +122,8 @@ export default async function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {pCasiTriple && <InteractiveProductCard product={pCasiTriple} variant="collage" />}
               {pAmarreArabe && <InteractiveProductCard product={pAmarreArabe} variant="collage" />}
-              {pGhostesco && <InteractiveProductCard product={pGhostesco} variant="collage" />}
               {pIncondicional && <InteractiveProductCard product={pIncondicional} variant="collage" />}
+              {pGhosteo && <InteractiveProductCard product={pGhosteo} variant="collage" />}
             </div>
           </div>
         </div>
