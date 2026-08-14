@@ -3,8 +3,30 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/types';
-import { ChefHat, CheckCircle, Bike, Home } from 'lucide-react';
 import type { Order } from '@/types';
+
+// Custom inline SVG for scooter/motorcycle
+const ScooterIcon = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M11 16.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" />
+    <path d="M21 16.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" />
+    <path d="M11 16.5h5.5" />
+    <path d="M6 16.5H4" />
+    <path d="M6 14v-2c0-1.5 1-3 2.5-3h4c1.5 0 2.5 1.5 3.5 3l2 2h3" />
+    <path d="M13.5 9v-2" />
+    <path d="M11 7h5" />
+    <path d="M16 11h2" />
+  </svg>
+);
 
 export default function OrderTrackerClient({ order: initialOrder }: { order: Order }) {
   const [order, setOrder] = useState<Order>(initialOrder);
@@ -39,6 +61,7 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
   }, [order.id, supabase]);
 
   const stages = [
+    { status: 'PENDING', label: 'Recibido', message: 'Hemos recibido tu pedido' },
     { status: 'PREPARING', label: 'Preparando', message: 'Estamos preparando tu pedido' },
     { status: 'READY', label: 'Listo', message: '¡Tu pedido está listo!' },
     { status: 'OUT_FOR_DELIVERY', label: 'En camino', message: 'Tu pedido va en camino' },
@@ -73,8 +96,8 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
     );
   }
 
-  // CONFIRMED and PENDING map to PREPARING for the tracker visual
-  const currentStatus = (order.status === 'PENDING' || order.status === 'CONFIRMED') ? 'PREPARING' : order.status;
+  // CONFIRMED historical maps to PENDING (index 0) for safety without breaking
+  const currentStatus = order.status === 'CONFIRMED' ? 'PENDING' : order.status;
   const currentStageIndex = stages.findIndex(s => s.status === currentStatus);
   const activeIndex = currentStageIndex === -1 ? 0 : currentStageIndex;
 
@@ -131,7 +154,7 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
           );
         })}
 
-        {/* The Animated Bike */}
+        {/* The Animated Scooter */}
         <div 
           className="absolute top-0 -translate-x-1/2 z-20 transition-all duration-700 ease-in-out motion-reduce:transition-none flex items-center justify-center rounded-full shadow-md border-2"
           style={{ 
@@ -145,7 +168,7 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
           }}
           aria-label={`Progreso actual: ${stages[activeIndex]?.label}`}
         >
-          <Bike className="w-5 h-5" />
+          <ScooterIcon className="w-5 h-5" />
         </div>
       </div>
       

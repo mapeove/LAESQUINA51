@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/utils';
 
 const TABS: { id: string; label: string }[] = [
   { id: 'ALL', label: 'Todos' },
+  { id: 'PENDING', label: 'Recibido' },
   { id: 'PREPARING', label: 'Preparando' },
   { id: 'READY', label: 'Listo' },
   { id: 'OUT_FOR_DELIVERY', label: 'En reparto' },
@@ -350,57 +351,82 @@ function AdminOrdersContent() {
         </div>
       </div>
 
-      {/* Drawer Detail */}
+      {/* Modal / Bottom Sheet Detail */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-neutral-900 border-l border-neutral-800 h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl">
-            <div>
-              <div className="flex justify-between items-center mb-6 border-b border-neutral-800 pb-4">
-                <div>
-                  <h2 className="text-2xl font-bold font-mono text-yellow-500">
-                    #{selectedOrder.order_number}
-                  </h2>
-                  <p className="text-xs text-neutral-400">
-                    {new Date(selectedOrder.created_at).toLocaleString('es-ES')}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  className="p-2 rounded-full hover:bg-neutral-800 text-neutral-400 hover:text-white"
-                >
-                  <X size={20} />
-                </button>
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 backdrop-blur-xs">
+          {/* Use max-h-[100dvh] for mobile bottom sheet effect, rounded top. On md: max-h-[90dvh] rounded-2xl */}
+          <div 
+            className="w-full md:max-w-4xl bg-[#F3E8CC] border-t md:border border-[#B88727] h-[100dvh] md:h-auto md:max-h-[90dvh] rounded-t-3xl md:rounded-2xl overflow-y-auto flex flex-col shadow-2xl relative"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            {/* Sticky Header */}
+            <div className="sticky top-0 bg-[#F3E8CC] z-10 px-6 py-5 border-b border-[#D5C29A] flex justify-between items-center rounded-t-3xl md:rounded-2xl">
+              <div>
+                <h2 className="text-2xl font-bold font-mono text-[#3A2418]">
+                  #{selectedOrder.order_number}
+                </h2>
+                <p className="text-sm font-bold text-[#A94F2F]">
+                  {new Date(selectedOrder.created_at).toLocaleString('es-ES')}
+                </p>
               </div>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="p-2 rounded-full hover:bg-[#E8D5A8] text-[#65513F] transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
 
-              {/* Status Selector */}
-              <div className="mb-4 p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
-                <label className="block text-xs font-bold uppercase text-neutral-400">
-                  Actualizar Estado
+            {/* Content Body */}
+            <div className="p-6 text-[#3A2418]">
+              {/* Status Pills replacing Select */}
+              <div className="mb-8 bg-white p-5 rounded-2xl border border-[#E8D5A8] shadow-sm">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#65513F] mb-3">
+                  ESTADO
                 </label>
-                <select
-                  value={selectedOrder.status}
-                  onChange={(e) => handleUpdateStatus(e.target.value as OrderStatus)}
-                  disabled={updating}
-                  className="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-yellow-500 text-sm"
-                >
-                  {Array.from(new Set([selectedOrder.status, 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'])).map((key) => (
-                    <option key={key} value={key}>
-                      {ORDER_STATUS_LABELS[key as OrderStatus] || key}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap gap-2">
+                  {['PENDING', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED'].map((st) => {
+                    // Logic for actual/completed/pending
+                    const statusOrder = ['PENDING', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+                    const currentIdx = statusOrder.indexOf(selectedOrder.status);
+                    const btnIdx = statusOrder.indexOf(st);
+                    
+                    let btnStyle = "";
+                    if (selectedOrder.status === st) {
+                      // Actual = resaltado
+                      btnStyle = "bg-[#A94F2F] text-white border-[#A94F2F] ring-2 ring-[#A94F2F]/30 ring-offset-1";
+                    } else if (btnIdx < currentIdx && currentIdx !== -1) {
+                      // Completado = tono de marca
+                      btnStyle = "bg-[#B88727] text-white border-[#B88727]";
+                    } else {
+                      // Pendiente = neutro
+                      btnStyle = "bg-[#F3E8CC] text-[#65513F] border-[#D5C29A] hover:bg-[#E8D5A8]";
+                    }
+
+                    return (
+                      <button
+                        key={st}
+                        onClick={() => handleUpdateStatus(st as OrderStatus)}
+                        disabled={updating || selectedOrder.status === 'CANCELLED'}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase border transition-all ${btnStyle} ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {ORDER_STATUS_LABELS[st as OrderStatus] || st}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Driver Assignment */}
-              <div className="mb-6 p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
-                <label className="block text-xs font-bold uppercase text-neutral-400 flex items-center gap-1">
-                  <Truck size={14} className="text-purple-400" /> Repartidor Asignado
+              <div className="mb-6 bg-white p-5 rounded-2xl border border-[#E8D5A8] shadow-sm space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#65513F] flex items-center gap-2">
+                  <Truck size={16} className="text-[#A94F2F]" /> Repartidor Asignado
                 </label>
                 <select
                   value={selectedOrder.driver_id || ''}
                   onChange={(e) => handleAssignDriver(e.target.value || null)}
                   disabled={updating}
-                  className="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-white focus:outline-none focus:border-yellow-500 text-sm"
+                  className="w-full p-3 rounded-xl bg-[#F3E8CC] border border-[#D5C29A] text-[#3A2418] font-bold focus:outline-none focus:border-[#B88727] text-sm"
                 >
                   <option value="">Sin asignar</option>
                   {drivers.map((d) => (
@@ -411,54 +437,56 @@ function AdminOrdersContent() {
                 </select>
               </div>
 
-              {/* Customer Info */}
-              <div className="space-y-4 mb-6 text-sm">
-                <div>
-                  <h3 className="text-xs font-bold uppercase text-neutral-400 mb-1">Cliente</h3>
-                  <p className="font-bold text-white">{selectedOrder.customer_name}</p>
-                  <p className="font-mono text-neutral-300">{selectedOrder.customer_phone}</p>
-                  {selectedOrder.customer_email && (
-                    <p className="text-neutral-400 text-xs">{selectedOrder.customer_email}</p>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-bold uppercase text-neutral-400 mb-1">Dirección de Entrega</h3>
-                  <p className="text-neutral-200">{selectedOrder.delivery_address}</p>
-                  {selectedOrder.delivery_zone_name && (
-                    <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-neutral-800 text-neutral-300">
-                      Zona: {selectedOrder.delivery_zone_name}
-                    </span>
-                  )}
-                </div>
-
-                {/* Payment info */}
-                <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Wallet size={16} className="text-yellow-500" />
-                    <div>
-                      <span className="text-xs font-bold uppercase text-neutral-300">Método de Pago:</span>
-                      <p className="text-sm font-bold font-mono text-yellow-500">{selectedOrder.payment_method}</p>
-                    </div>
-                  </div>
-
-                  {selectedOrder.payment_method === 'CASH' && selectedOrder.cash_change_for && (
-                    <div className="text-right">
-                      <span className="text-[10px] text-neutral-400 uppercase">Cambio para</span>
-                      <p className="text-sm font-mono font-bold text-green-400">{formatPrice(selectedOrder.cash_change_for)}</p>
-                    </div>
-                  )}
-                </div>
-
-                {selectedOrder.notes && (
+              {/* Layout for Customer Info & Order Items */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Customer Info */}
+                <div className="space-y-4 text-sm bg-white p-5 rounded-2xl border border-[#E8D5A8] shadow-sm h-full">
                   <div>
-                    <h3 className="text-xs font-bold uppercase text-neutral-400 mb-1">Observaciones</h3>
-                    <p className="text-xs italic text-yellow-200 bg-yellow-950/40 p-3 rounded-xl border border-yellow-900/50">
-                      {selectedOrder.notes}
-                    </p>
+                    <h3 className="text-xs font-bold uppercase text-[#A94F2F] mb-1">Cliente</h3>
+                    <p className="font-bold text-[#3A2418] text-lg">{selectedOrder.customer_name}</p>
+                    <p className="font-mono text-[#65513F]">{selectedOrder.customer_phone}</p>
+                    {selectedOrder.customer_email && (
+                      <p className="text-[#65513F] text-xs mt-1">{selectedOrder.customer_email}</p>
+                    )}
                   </div>
-                )}
-              </div>
+
+                  <div className="pt-2 border-t border-[#D5C29A]/40">
+                    <h3 className="text-xs font-bold uppercase text-[#A94F2F] mb-1">Dirección de Entrega</h3>
+                    <p className="text-[#3A2418] font-medium">{selectedOrder.delivery_address}</p>
+                    {selectedOrder.delivery_zone_name && (
+                      <span className="inline-block mt-2 px-2 py-1 rounded bg-[#B88727]/20 text-[#B88727] text-[10px] font-bold uppercase">
+                        Zona: {selectedOrder.delivery_zone_name}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Payment info */}
+                  <div className="mt-4 p-3 rounded-xl bg-[#F3E8CC] border border-[#D5C29A] flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Wallet size={16} className="text-[#A94F2F]" />
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-[#65513F] block">Pago:</span>
+                        <p className="text-sm font-bold font-mono text-[#3A2418]">{selectedOrder.payment_method}</p>
+                      </div>
+                    </div>
+
+                    {selectedOrder.payment_method === 'CASH' && selectedOrder.cash_change_for && (
+                      <div className="text-right">
+                        <span className="text-[10px] text-[#65513F] font-bold uppercase block">Cambio para</span>
+                        <p className="text-sm font-mono font-bold text-[#A94F2F]">{formatPrice(selectedOrder.cash_change_for)}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedOrder.notes && (
+                    <div className="pt-2">
+                      <h3 className="text-xs font-bold uppercase text-[#A94F2F] mb-1">Observaciones</h3>
+                      <p className="text-sm font-medium italic text-[#A94F2F] bg-[#A94F2F]/10 p-3 rounded-xl border border-[#A94F2F]/20">
+                        &quot;{selectedOrder.notes}&quot;
+                      </p>
+                    </div>
+                  )}
+                </div>
 
               {/* WhatsApp direct contact */}
               <a
@@ -474,55 +502,64 @@ function AdminOrdersContent() {
                 <span>Contactar Cliente por WhatsApp</span>
               </a>
 
-              {/* Items summary */}
-              <div>
-                <h3 className="text-xs font-bold uppercase text-neutral-400 mb-2">Productos</h3>
-                <div className="space-y-2 mb-4">
-                  {selectedOrder.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between text-sm p-2 rounded bg-neutral-950">
-                      <div>
-                        <span className="font-bold">{item.quantity}x</span> {item.product_name}
+                {/* Items summary */}
+                <div className="bg-white p-5 rounded-2xl border border-[#E8D5A8] shadow-sm h-full flex flex-col">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#A94F2F] mb-4">Productos</h3>
+                  <div className="space-y-3 mb-4 flex-1">
+                    {selectedOrder.items?.map((item, idx) => (
+                      <div key={idx} className="flex justify-between text-sm p-3 rounded-xl bg-[#F3E8CC] text-[#3A2418]">
+                        <div>
+                          <span className="font-black text-[#A94F2F] mr-1">{item.quantity}x</span> 
+                          <span className="font-bold">{item.product_name}</span>
+                        </div>
+                        <span className="font-mono font-bold">{formatPrice(item.line_total)}</span>
                       </div>
-                      <span className="font-mono">{formatPrice(item.line_total)}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
 
-                <div className="border-t border-neutral-800 pt-3 flex justify-between items-center text-lg font-bold">
-                  <span>TOTAL</span>
-                  <span className="font-mono text-yellow-500">
-                    {formatPrice(selectedOrder.total)}
-                  </span>
+                  <div className="border-t-2 border-[#D5C29A] pt-4 flex justify-between items-center text-xl font-black">
+                    <span className="uppercase text-[#3A2418]">TOTAL</span>
+                    <span className="font-mono text-[#A94F2F]">
+                      {formatPrice(selectedOrder.total)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Destructive Action: Delete Order */}
-              <div className="mt-8 pt-6 border-t border-red-900/30">
+              {/* Destructive Actions */}
+              <div className="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t border-[#D5C29A]/50">
+                <button
+                  onClick={() => handleUpdateStatus('CANCELLED')}
+                  disabled={updating || selectedOrder.status === 'CANCELLED'}
+                  className="flex-1 py-3 rounded-xl text-sm font-bold border-2 transition-colors border-red-500 text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+                >
+                  CANCELAR PEDIDO
+                </button>
+                
                 {!showDeleteConfirm ? (
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
                     disabled={isDeleting}
-                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 rounded-xl text-sm font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border-2 transition-colors border-neutral-300 text-neutral-500 hover:border-red-500 hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 size={18} />
-                    <span>Borrar pedido</span>
+                    <span>BORRAR PEDIDO</span>
                   </button>
                 ) : (
-                  <div className="p-4 rounded-xl border border-red-900/50 bg-red-950/30 space-y-3">
-                    <p className="text-sm font-bold text-red-500">¿Eliminar definitivamente el pedido #{selectedOrder.order_number}?</p>
-                    <p className="text-xs text-red-400">Esta acción eliminará el pedido y sus datos asociados y no se puede deshacer.</p>
-                    <div className="flex space-x-3 pt-2">
+                  <div className="flex-1 p-4 rounded-xl border-2 border-red-500 bg-red-50">
+                    <p className="text-sm font-bold text-red-600 mb-2">¿Eliminar definitivamente?</p>
+                    <div className="flex space-x-2">
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
                         disabled={isDeleting}
-                        className="flex-1 py-2 rounded-lg text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700"
+                        className="flex-1 py-2 rounded-lg text-xs font-bold text-neutral-600 bg-neutral-200 hover:bg-neutral-300"
                       >
                         CANCELAR
                       </button>
                       <button
                         onClick={handleDeleteOrder}
                         disabled={isDeleting}
-                        className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-red-600 hover:bg-red-500"
+                        className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-red-600 hover:bg-red-700"
                       >
                         {isDeleting ? 'ELIMINANDO...' : 'ELIMINAR DEFINITIVAMENTE'}
                       </button>

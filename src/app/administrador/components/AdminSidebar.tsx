@@ -18,7 +18,6 @@ import {
   X 
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { AdminOrderNotifier } from './AdminOrderNotifier';
 
 const links = [
   { name: 'Dashboard', href: '/administrador', icon: LayoutDashboard },
@@ -105,7 +104,6 @@ export function AdminSidebar() {
         </div>
 
         <div className="p-3 border-t" style={{ borderColor: '#65513F' }}>
-          <AdminOrderNotifier />
           
           <button
             onClick={handleLogout}

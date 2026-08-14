@@ -45,18 +45,31 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (signInError) {
+    if (signInError || !data.user) {
       setError('Credenciales incorrectas o usuario no encontrado.');
       setLoading(false);
       return;
     }
 
-    router.push('/mi-cuenta');
+    // Check if the user is an active OWNER
+    const { data: adminUser } = await supabase
+      .from('admin_users')
+      .select('*')
+      .eq('user_id', data.user.id)
+      .eq('role', 'OWNER')
+      .maybeSingle();
+
+    if (adminUser) {
+      router.replace('/administrador');
+    } else {
+      router.push('/mi-cuenta');
+    }
+    
     router.refresh();
   };
 
