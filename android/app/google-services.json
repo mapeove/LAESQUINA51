@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "643252521762",
+    "project_id": "laesquina51",
+    "storage_bucket": "laesquina51.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:643252521762:android:7e17843f505dfb4ebf337b",
+        "android_client_info": {
+          "package_name": "com.laesquina51.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGCHNKNpORwVEL6A9vhoFZWfGmqyzEEBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

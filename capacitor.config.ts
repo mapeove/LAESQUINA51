@@ -13,6 +13,11 @@ const config: CapacitorConfig = {
       keystorePath: 'laesquina51-release.jks',
       keystoreAlias: 'key0'
     }
+  },
+  plugins: {
+    PushNotifications: {
+      presentationOptions: []
+    }
   }
 };
 

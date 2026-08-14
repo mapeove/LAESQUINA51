@@ -30,7 +30,7 @@ export function AdminOrderNotifier() {
         setHasInteracted(true); // Assume prior interaction
       }, 0);
     }
-    audioRef.current = new Audio('/sounds/admin-new-order.m4a');
+    audioRef.current = new Audio('/sounds/administrador.mp3');
   }, []);
 
   const playSound = useCallback(() => {

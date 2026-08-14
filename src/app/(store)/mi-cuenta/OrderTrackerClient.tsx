@@ -36,7 +36,7 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioRef.current = new Audio('/sounds/customer-status-change.mp3');
+    audioRef.current = new Audio('/sounds/cliente.mp3');
   }, []);
 
   useEffect(() => {

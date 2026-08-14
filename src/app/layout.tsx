@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { CartProvider } from '@/features/cart/cart-context';
+import { PushNotificationManager } from '@/components/PushNotificationManager';
 
 export const viewport: Viewport = {
   themeColor: '#F3E8CC',
@@ -43,6 +44,7 @@ export default function RootLayout({
     <html lang="es">
       <body className="bg-[#F3E8CC] text-[#3A2418] font-inter min-h-[100dvh] antialiased">
         <CartProvider>
+          <PushNotificationManager />
           {children}
         </CartProvider>
       </body>
