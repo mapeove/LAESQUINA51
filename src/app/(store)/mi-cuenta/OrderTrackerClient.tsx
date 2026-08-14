@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/types';
 import type { Order } from '@/types';
@@ -32,6 +32,12 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
   const [order, setOrder] = useState<Order>(initialOrder);
   const [isDeleted, setIsDeleted] = useState(false);
   const supabase = createClient();
+  const previousStatus = useRef<string>(initialOrder.status);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio('/sounds/customer-status-change.mp3');
+  }, []);
 
   useEffect(() => {
     // Subscribe to real-time updates for this specific order
@@ -49,7 +55,15 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
           if (payload.eventType === 'DELETE') {
             setIsDeleted(true);
           } else if (payload.eventType === 'UPDATE') {
-            setOrder(payload.new as Order);
+            const newOrder = payload.new as Order;
+            if (newOrder.status !== previousStatus.current) {
+              previousStatus.current = newOrder.status;
+              if (audioRef.current) {
+                audioRef.current.currentTime = 0;
+                audioRef.current.play().catch(e => console.warn('Autoplay blocked by browser:', e));
+              }
+            }
+            setOrder(newOrder);
           }
         }
       )
