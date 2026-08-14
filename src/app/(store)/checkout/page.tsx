@@ -122,8 +122,8 @@ export default function CheckoutPage() {
     );
   }
 
-  const deliveryFee = 0; // Envío GRATIS en toda la zona
-  const total = subtotal + deliveryFee;
+  const DELIVERY_FEE = 1.00; // Envío = 1.00 €
+  const total = subtotal + DELIVERY_FEE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +142,7 @@ export default function CheckoutPage() {
         user_id: userId,
         items,
         subtotal,
-        delivery_fee: deliveryFee,
+        delivery_fee: DELIVERY_FEE,
         total,
         cash_change_for: formData.payment_method === 'CASH' && formData.cash_change_for ? parseFloat(formData.cash_change_for) : null,
       };
@@ -369,7 +369,7 @@ export default function CheckoutPage() {
             >
               <Wallet size={28} />
               <span className="font-bold text-xs uppercase tracking-wider font-mono">BIZUM</span>
-              <span className="text-[10px]" style={{ color: '#65513F' }}>Transferencia al recibir</span>
+              <span className="text-[10px]" style={{ color: '#65513F' }}>Pago por Bizum al recibir</span>
             </button>
           </div>
 
@@ -397,7 +397,7 @@ export default function CheckoutPage() {
                 📱 Instrucciones de Pago por Bizum:
               </span>
               <p className="text-xs" style={{ color: '#65513F' }}>
-                Podrás realizar el Bizum al repartidor en el momento exacto de la entrega al número oficial de La Esquina 51:
+                Realiza el Bizum al repartidor en el momento de la entrega al número oficial de La Esquina 51:
               </p>
               <div className="p-2.5 rounded-lg border font-mono text-center text-lg font-bold tracking-wider" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8', color: '#A94F2F' }}>
                 {bizumPhone}
@@ -416,8 +416,8 @@ export default function CheckoutPage() {
               <span className="font-mono font-bold" style={{ color: '#3A2418' }}>{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between" style={{ color: '#65513F' }}>
-              <span>Gastos de Envío:</span>
-              <span className="font-mono text-emerald-700 font-bold">¡GRATIS!</span>
+              <span>Gastos de envío:</span>
+              <span className="font-mono font-bold" style={{ color: '#3A2418' }}>{formatPrice(DELIVERY_FEE)}</span>
             </div>
             <div className="border-t pt-3 flex justify-between items-center text-base font-bold" style={{ borderColor: '#E8D5A8', color: '#3A2418' }}>
               <span>TOTAL A PAGAR:</span>

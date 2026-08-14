@@ -476,6 +476,13 @@ function AdminOrdersContent() {
                         <p className="text-sm font-mono font-bold text-[#A94F2F]">{formatPrice(selectedOrder.cash_change_for)}</p>
                       </div>
                     )}
+
+                    {selectedOrder.payment_method === 'BIZUM' && (
+                      <div className="text-right">
+                        <span className="text-[10px] text-[#65513F] font-bold uppercase block text-orange-700">Importante</span>
+                        <p className="text-[11px] font-bold text-[#A94F2F] leading-tight">Cobrar por<br/>Bizum al entregar</p>
+                      </div>
+                    )}
                   </div>
 
                   {selectedOrder.notes && (
