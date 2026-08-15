@@ -14,7 +14,23 @@ export default function AdminDriversPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const supabase = createClient();
 
-  const loadDrivers = async () => {
+  useEffect(() => {
+    let ignore = false;
+    async function fetchDrivers() {
+      const { data } = await supabase
+        .from('delivery_drivers')
+        .select('*')
+        .order('name', { ascending: true });
+      if (!ignore && data) {
+        setDrivers(data as DeliveryDriver[]);
+        setLoading(false);
+      }
+    }
+    fetchDrivers();
+    return () => { ignore = true; };
+  }, [supabase]);
+
+  const reloadDrivers = async () => {
     const { data } = await supabase
       .from('delivery_drivers')
       .select('*')
@@ -23,10 +39,6 @@ export default function AdminDriversPage() {
       setDrivers(data as DeliveryDriver[]);
     }
   };
-
-  useEffect(() => {
-    loadDrivers().finally(() => setLoading(false));
-  }, [supabase]);
 
   const handleToggleActive = async (id: string, active: boolean) => {
     const { error } = await supabase.from('delivery_drivers').update({ active }).eq('id', id);
@@ -79,7 +91,7 @@ export default function AdminDriversPage() {
           if (rpcError) throw rpcError;
         }
 
-        await loadDrivers();
+        await reloadDrivers();
         setIsModalOpen(false);
       } else {
         const { data, error } = await supabase.from('delivery_drivers').insert(payload).select().single();
@@ -91,12 +103,13 @@ export default function AdminDriversPage() {
           if (rpcError) throw rpcError;
         }
 
-        await loadDrivers();
+        await reloadDrivers();
         setIsModalOpen(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error saving driver:", err);
-      setSaveError(err.message || 'Error al guardar el repartidor. Revisa los datos.');
+      const msg = err instanceof Error ? err.message : String(err);
+      setSaveError(msg || 'Error al guardar el repartidor. Revisa los datos.');
     } finally {
       setIsSaving(false);
     }
