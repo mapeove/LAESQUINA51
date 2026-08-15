@@ -192,7 +192,7 @@ export default function AdminDriversPage() {
       {/* Modal */}
       {isModalOpen && editingDriver && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-md w-full">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold font-mono">
                 {editingDriver.id ? 'Editar Repartidor' : 'Alta de Repartidor'}
