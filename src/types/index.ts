@@ -53,6 +53,8 @@ export interface DeliveryDriver {
   vehicle_type: string
   notes: string | null
   active: boolean
+  user_id?: string | null
+  auth_email?: string
   created_at: string
   updated_at: string
 }
@@ -182,6 +184,7 @@ export type OrderStatus =
   | 'PREPARING'
   | 'READY'
   | 'OUT_FOR_DELIVERY'
+  | 'ARRIVED'
   | 'DELIVERED'
   | 'CANCELLED'
 
@@ -191,6 +194,7 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PREPARING: 'Preparando',
   READY: 'Listo',
   OUT_FOR_DELIVERY: 'En reparto',
+  ARRIVED: 'He llegado',
   DELIVERED: 'Entregado',
   CANCELLED: 'Cancelado',
 }
@@ -201,6 +205,7 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   PREPARING: 'bg-orange-500 text-white',
   READY: 'bg-green-400 text-black',
   OUT_FOR_DELIVERY: 'bg-purple-500 text-white',
+  ARRIVED: 'bg-pink-500 text-white',
   DELIVERED: 'bg-green-600 text-white',
   CANCELLED: 'bg-red-600 text-white',
 }

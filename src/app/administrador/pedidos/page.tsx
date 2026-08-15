@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { X, MessageCircle, ChevronRight, Truck, Wallet, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type { Order, OrderStatus, DeliveryDriver } from '@/types';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/types';
 import { formatPrice } from '@/lib/utils';
+import OrderChat from '@/components/OrderChat';
 
 const TABS: { id: string; label: string }[] = [
   { id: 'ALL', label: 'Todos' },
@@ -24,11 +25,21 @@ function AdminOrdersContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('ALL');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const supabase = createClient();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setCurrentUserId(data.user.id);
+    });
+  }, [supabase]);
+
   const [updating, setUpdating] = useState(false);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
-  const supabase = createClient();
 
   useEffect(() => {
     let ignore = false;
@@ -385,9 +396,9 @@ function AdminOrdersContent() {
                   ESTADO
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {['PENDING', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED'].map((st) => {
+                  {['PENDING', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'ARRIVED', 'DELIVERED'].map((st) => {
                     // Logic for actual/completed/pending
-                    const statusOrder = ['PENDING', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+                    const statusOrder = ['PENDING', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'ARRIVED', 'DELIVERED'];
                     const currentIdx = statusOrder.indexOf(selectedOrder.status);
                     const btnIdx = statusOrder.indexOf(st);
                     
@@ -525,13 +536,20 @@ function AdminOrdersContent() {
                   </div>
 
                   <div className="border-t-2 border-[#D5C29A] pt-4 flex justify-between items-center text-xl font-black">
-                    <span className="uppercase text-[#3A2418]">TOTAL</span>
+                      <span className="uppercase text-[#3A2418]">TOTAL</span>
                     <span className="font-mono text-[#A94F2F]">
                       {formatPrice(selectedOrder.total)}
                     </span>
                   </div>
                 </div>
               </div>
+
+              {/* Chat Supervisor (OWNER) */}
+              {currentUserId && selectedOrder.driver_id && ['READY', 'OUT_FOR_DELIVERY', 'ARRIVED', 'DELIVERED', 'CANCELLED'].includes(selectedOrder.status) && (
+                <div className="mb-8">
+                  <OrderChat orderId={selectedOrder.id} currentUserId={currentUserId} userRole="owner" />
+                </div>
+              )}
 
               {/* Destructive Actions */}
               <div className="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t border-[#D5C29A]/50">

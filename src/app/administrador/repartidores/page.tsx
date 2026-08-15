@@ -73,12 +73,18 @@ export default function AdminDriversPage() {
     if (editingDriver.id) {
       const { error } = await supabase.from('delivery_drivers').update(payload).eq('id', editingDriver.id);
       if (!error) {
+        if (editingDriver.auth_email) {
+          await supabase.rpc('link_driver_by_email', { p_driver_id: editingDriver.id, p_email: editingDriver.auth_email });
+        }
         setDrivers(drivers.map(d => d.id === editingDriver.id ? { ...d, ...payload } as DeliveryDriver : d));
         setIsModalOpen(false);
       }
     } else {
       const { data, error } = await supabase.from('delivery_drivers').insert(payload).select().single();
       if (!error && data) {
+        if (editingDriver.auth_email) {
+          await supabase.rpc('link_driver_by_email', { p_driver_id: data.id, p_email: editingDriver.auth_email });
+        }
         setDrivers([...drivers, data as DeliveryDriver]);
         setIsModalOpen(false);
       }
@@ -206,6 +212,17 @@ export default function AdminDriversPage() {
                   onChange={(e) => setEditingDriver({ ...editingDriver, name: e.target.value })}
                   className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
                   placeholder="Ej: Carlos Gómez"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-neutral-400 mb-1">Email de Cuenta App (Opcional)</label>
+                <input
+                  type="email"
+                  value={editingDriver.auth_email || ''}
+                  onChange={(e) => setEditingDriver({ ...editingDriver, auth_email: e.target.value })}
+                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
+                  placeholder="Para vincular login"
                 />
               </div>
 

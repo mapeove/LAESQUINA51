@@ -66,6 +66,20 @@ export default function LoginPage() {
 
     if (adminUser) {
       router.replace('/administrador');
+      router.refresh();
+      return;
+    } 
+    
+    // Check if the user is a driver
+    const { data: driverUser } = await supabase
+      .from('delivery_drivers')
+      .select('*')
+      .eq('user_id', data.user.id)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (driverUser) {
+      router.push('/repartidor');
     } else {
       router.push('/mi-cuenta');
     }

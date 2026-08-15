@@ -28,12 +28,21 @@ const ScooterIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+import OrderChat from '@/components/OrderChat';
+
 export default function OrderTrackerClient({ order: initialOrder }: { order: Order }) {
   const [order, setOrder] = useState<Order>(initialOrder);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const supabase = createClient();
   const previousStatus = useRef<string>(initialOrder.status);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setCurrentUserId(data.user.id);
+    });
+  }, [supabase]);
 
   useEffect(() => {
     audioRef.current = new Audio('/sounds/cliente.mp3');
@@ -79,7 +88,8 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
     { status: 'PREPARING', label: 'Preparando', message: 'Estamos preparando tu pedido' },
     { status: 'READY', label: 'Listo', message: '¡Tu pedido está listo!' },
     { status: 'OUT_FOR_DELIVERY', label: 'En camino', message: 'Tu pedido va en camino' },
-    { status: 'DELIVERED', label: 'Entregado', message: '¡Hemos llegado!' },
+    { status: 'ARRIVED', label: 'He llegado', message: '🛵 Tu repartidor ha llegado' },
+    { status: 'DELIVERED', label: 'Entregado', message: 'Pedido entregado' },
   ];
 
   if (isDeleted) {
@@ -192,13 +202,17 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
           <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wide" style={{ color: '#3A2418', fontFamily: 'Oswald, sans-serif' }}>
             {stages[activeIndex]?.message}
           </h2>
-          {order.status === 'OUT_FOR_DELIVERY' && order.driver && (
+          {['OUT_FOR_DELIVERY', 'ARRIVED'].includes(order.status) && order.driver && (
             <p className="text-sm font-mono mt-3 px-4 py-1.5 rounded-full" style={{ color: '#65513F', backgroundColor: 'rgba(184,135,39,0.15)' }}>
               Repartidor: <span className="font-bold">{order.driver.name}</span>
             </p>
           )}
         </div>
       </div>
+
+      {currentUserId && order.driver_id && ['READY', 'OUT_FOR_DELIVERY', 'ARRIVED', 'DELIVERED', 'CANCELLED'].includes(order.status) && (
+        <OrderChat orderId={order.id} currentUserId={currentUserId} userRole="customer" />
+      )}
     </div>
   );
 }
