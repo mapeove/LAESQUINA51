@@ -15,6 +15,58 @@ const DAYS = [
   { id: 0, name: 'Domingo' }
 ];
 
+function TimeInput({
+  value,
+  onChange,
+  disabled
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  disabled?: boolean;
+}) {
+  const [localVal, setLocalVal] = useState(value ? value.substring(0, 5) : '');
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLocalVal(value ? value.substring(0, 5) : '');
+  }, [value]);
+
+  const handleBlur = () => {
+    let parsed = localVal.trim();
+    if (!parsed) {
+      onChange('');
+      return;
+    }
+
+    if (/^\d:\d{2}$/.test(parsed)) parsed = `0${parsed}`;
+    
+    if (/^\d{1,2}$/.test(parsed)) {
+      const num = parseInt(parsed, 10);
+      if (num >= 0 && num <= 23) parsed = `${num.toString().padStart(2, '0')}:00`;
+    }
+
+    setLocalVal(parsed);
+    onChange(parsed);
+  };
+
+  const isValid = !localVal || /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(localVal);
+
+  return (
+    <input
+      type="text"
+      inputMode="text"
+      placeholder="HH:mm"
+      value={localVal}
+      onChange={(e) => setLocalVal(e.target.value)}
+      onBlur={handleBlur}
+      disabled={disabled}
+      className={`bg-transparent text-white font-mono text-base outline-none w-[65px] text-center border-b transition-colors disabled:opacity-30 ${
+        !isValid ? 'border-red-500 text-red-400' : 'border-neutral-700 focus:border-yellow-500'
+      }`}
+    />
+  );
+}
+
 export default function AdminHoursPage() {
   const [hours, setHours] = useState<OpeningHour[]>([]);
   const [specialHours, setSpecialHours] = useState<SpecialOpeningHour[]>([]);
@@ -58,8 +110,11 @@ export default function AdminHoursPage() {
       
       for (let i = 0; i < daySlots.length; i++) {
         const s1 = daySlots[i];
-        if (!s1.open_time || !s1.close_time) {
-          alert(`Error en ${day.name}: Todos los tramos deben tener hora de apertura y cierre.`);
+        const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+        const o = s1.open_time ? s1.open_time.substring(0,5) : '';
+        const c = s1.close_time ? s1.close_time.substring(0,5) : '';
+        if (!timeRegex.test(o) || !timeRegex.test(c)) {
+          alert(`Error en ${day.name}: Formato de hora inválido (usa formato HH:mm, ej: 19:30).`);
           return;
         }
         for (let j = i + 1; j < daySlots.length; j++) {
@@ -108,7 +163,7 @@ export default function AdminHoursPage() {
   const handleAddSlot = (dayId: number) => {
     setHours([...hours, {
       id: crypto.randomUUID(),
-      day_of_week: dayId as any,
+      day_of_week: dayId as OpeningHour['day_of_week'],
       open_time: '19:00',
       close_time: '23:30',
       active: true
@@ -136,6 +191,15 @@ export default function AdminHoursPage() {
   const handleAddSpecial = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSpecial.special_date) return;
+
+    const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+    const o = newSpecial.open_time ? newSpecial.open_time.substring(0,5) : '';
+    const c = newSpecial.close_time ? newSpecial.close_time.substring(0,5) : '';
+    
+    if (!newSpecial.is_closed && (!timeRegex.test(o) || !timeRegex.test(c))) {
+      alert('Error: Formato de hora inválido en la excepción (usa HH:mm, ej: 19:30).');
+      return;
+    }
 
     setSaving(true);
     const { data, error } = await supabase
@@ -220,18 +284,14 @@ export default function AdminHoursPage() {
                     {daySlots.map(slot => (
                       <div key={slot.id} className="flex flex-wrap items-center gap-3">
                         <div className="flex items-center space-x-2 bg-neutral-900 p-1.5 rounded-lg border border-neutral-700">
-                          <input
-                            type="time"
-                            value={slot.open_time.substring(0,5)}
-                            onChange={e => handleUpdateSlot(slot.id, 'open_time', e.target.value)}
-                            className="bg-transparent text-white font-mono text-sm outline-none w-[75px]"
+                          <TimeInput
+                            value={slot.open_time}
+                            onChange={val => handleUpdateSlot(slot.id, 'open_time', val)}
                           />
                           <span className="text-neutral-500 text-xs">a</span>
-                          <input
-                            type="time"
-                            value={slot.close_time.substring(0,5)}
-                            onChange={e => handleUpdateSlot(slot.id, 'close_time', e.target.value)}
-                            className="bg-transparent text-white font-mono text-sm outline-none w-[75px]"
+                          <TimeInput
+                            value={slot.close_time}
+                            onChange={val => handleUpdateSlot(slot.id, 'close_time', val)}
                           />
                         </div>
                         <button
@@ -278,20 +338,17 @@ export default function AdminHoursPage() {
 
             <div>
               <label className="block text-[10px] text-neutral-400 uppercase mb-1">Apertura / Cierre</label>
-              <div className="flex items-center space-x-1">
-                <input
-                  type="time"
+              <div className="flex items-center space-x-1 p-1">
+                <TimeInput
                   disabled={newSpecial.is_closed}
-                  value={newSpecial.open_time || '19:00'}
-                  onChange={(e) => setNewSpecial({ ...newSpecial, open_time: e.target.value })}
-                  className="w-full p-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-xs font-mono disabled:opacity-30"
+                  value={newSpecial.open_time || ''}
+                  onChange={(val) => setNewSpecial({ ...newSpecial, open_time: val })}
                 />
-                <input
-                  type="time"
+                <span className="text-neutral-500">-</span>
+                <TimeInput
                   disabled={newSpecial.is_closed}
-                  value={newSpecial.close_time || '00:00'}
-                  onChange={(e) => setNewSpecial({ ...newSpecial, close_time: e.target.value })}
-                  className="w-full p-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-xs font-mono disabled:opacity-30"
+                  value={newSpecial.close_time || ''}
+                  onChange={(val) => setNewSpecial({ ...newSpecial, close_time: val })}
                 />
               </div>
             </div>
