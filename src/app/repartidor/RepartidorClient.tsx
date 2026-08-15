@@ -34,11 +34,6 @@ export default function RepartidorClient({ initialOrders, driver, currentUserId 
 
   const activeOrders = orders.filter(o => ['READY', 'OUT_FOR_DELIVERY', 'ARRIVED'].includes(o.status));
 
-  const updateStatus = async (orderId: string, newStatus: string) => {
-    const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
-    if (error) alert('Error actualizando pedido: ' + error.message);
-  };
-
   const openGoogleMaps = (address: string) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
     window.open(url, '_blank');
@@ -130,7 +125,10 @@ export default function RepartidorClient({ initialOrders, driver, currentUserId 
               <div className="pt-4 space-y-3">
                 {order.status === 'OUT_FOR_DELIVERY' && (
                   <button 
-                    onClick={() => updateStatus(order.id, 'ARRIVED')}
+                    onClick={async () => {
+                      const { error } = await supabase.rpc('driver_mark_arrived', { p_order_id: order.id });
+                      if (error) alert('Error actualizando pedido: ' + error.message);
+                    }}
                     className="w-full py-4 bg-[#A94F2F] text-white rounded-xl font-bold uppercase tracking-wide active:bg-[#8A3F22] flex justify-center items-center gap-2"
                   >
                     <span>HE LLEGADO</span>
@@ -139,7 +137,10 @@ export default function RepartidorClient({ initialOrders, driver, currentUserId 
                 
                 {order.status === 'ARRIVED' && (
                   <button 
-                    onClick={() => updateStatus(order.id, 'DELIVERED')}
+                    onClick={async () => {
+                      const { error } = await supabase.rpc('driver_mark_delivered', { p_order_id: order.id });
+                      if (error) alert('Error actualizando pedido: ' + error.message);
+                    }}
                     className="w-full py-4 bg-green-600 text-white rounded-xl font-bold uppercase tracking-wide active:bg-green-700 flex justify-center items-center gap-2"
                   >
                     <span>PEDIDO ENTREGADO</span>

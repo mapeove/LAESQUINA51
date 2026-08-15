@@ -19,18 +19,21 @@ CREATE TABLE IF NOT EXISTS public.order_messages (
 CREATE INDEX IF NOT EXISTS idx_order_messages_order_id ON public.order_messages(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_messages_created_at ON public.order_messages(created_at ASC);
 
--- 3. RLS para order_messages
-ALTER TABLE public.order_messages ENABLE ROW LEVEL SECURITY;
-
+-- 3. Helper functions
 -- Helper function to check si el usuario autenticado es el repartidor asignado a ese pedido
 CREATE OR REPLACE FUNCTION is_order_driver(check_order_id UUID)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+SET search_path = public
+AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.orders o
     JOIN public.delivery_drivers d ON o.driver_id = d.id
     WHERE o.id = check_order_id AND d.user_id = auth.uid()
   );
 $$ LANGUAGE sql SECURITY DEFINER;
+
+-- 4. RLS para order_messages
+ALTER TABLE public.order_messages ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: Owner, Customer, o Driver asignado
 CREATE POLICY "order_messages_select"
@@ -45,36 +48,41 @@ USING (
   is_order_driver(order_messages.order_id)
 );
 
--- INSERT: Solo Owner, Customer, o Driver asignado
+-- INSERT: Solo Owner, Customer, o Driver asignado. 
+-- Comprobar estado del pedido y autenticidad del remitente.
 CREATE POLICY "order_messages_insert"
 ON public.order_messages
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  is_admin() 
-  OR 
-  (SELECT user_id FROM public.orders WHERE id = order_id) = auth.uid()
-  OR
-  is_order_driver(order_id)
+  -- Comprobar que no hace spoofing
+  sender_user_id = auth.uid()
+  AND
+  -- Comprobar status del pedido
+  (SELECT status FROM public.orders WHERE id = order_id) IN ('READY', 'OUT_FOR_DELIVERY', 'ARRIVED')
+  AND
+  (
+    -- Comprobar permisos por rol o propiedad
+    is_admin() 
+    OR 
+    (SELECT user_id FROM public.orders WHERE id = order_id) = auth.uid()
+    OR
+    is_order_driver(order_id)
+  )
 );
 
--- 4. RLS update para delivery_drivers (drivers necesitan leer su propio perfil)
+-- 5. RLS para delivery_drivers y orders (SELECT)
 CREATE POLICY "delivery_drivers_read_own" ON public.delivery_drivers
 FOR SELECT
 TO authenticated
 USING ( user_id = auth.uid() );
 
--- 5. RLS update para orders (drivers necesitan leer y actualizar pedidos asignados)
 CREATE POLICY "orders_driver_select" ON public.orders
 FOR SELECT
 TO authenticated
 USING ( is_order_driver(id) );
 
-CREATE POLICY "orders_driver_update" ON public.orders
-FOR UPDATE
-TO authenticated
-USING ( is_order_driver(id) )
-WITH CHECK ( is_order_driver(id) );
+-- ELIMINAMOS la policy "orders_driver_update" por completo, usamos RPCs
 
 -- 6. Añadir order_messages a realtime
 DO $$
@@ -91,9 +99,12 @@ BEGIN
     END IF;
 END $$;
 
--- Helper function para vincular repartidor por email (bypasseando RLS de auth.users)
+-- 7. RPCs Administrativas y de Flujo
+-- Helper function para vincular repartidor por email
 CREATE OR REPLACE FUNCTION link_driver_by_email(p_driver_id UUID, p_email TEXT)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+SET search_path = public, auth
+AS $$
 DECLARE
   v_user_id UUID;
 BEGIN
@@ -102,7 +113,7 @@ BEGIN
     RAISE EXCEPTION 'Not authorized';
   END IF;
 
-  -- Buscar usuario por email
+  -- Buscar usuario por email en auth.users
   SELECT id INTO v_user_id FROM auth.users WHERE email = p_email LIMIT 1;
   
   IF v_user_id IS NULL THEN
@@ -112,6 +123,70 @@ BEGIN
   -- Actualizar driver
   UPDATE public.delivery_drivers SET user_id = v_user_id WHERE id = p_driver_id;
   RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- RPC driver_mark_arrived
+CREATE OR REPLACE FUNCTION driver_mark_arrived(p_order_id UUID)
+RETURNS VOID
+SET search_path = public
+AS $$
+DECLARE
+  v_status TEXT;
+BEGIN
+  -- Verificar sesión
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  -- Verificar si es el conductor asignado
+  IF NOT is_order_driver(p_order_id) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  -- Obtener status
+  SELECT status INTO v_status FROM public.orders WHERE id = p_order_id;
+  
+  -- Exigir transición correcta
+  IF v_status != 'OUT_FOR_DELIVERY' THEN
+    RAISE EXCEPTION 'Invalid status transition. Order must be OUT_FOR_DELIVERY.';
+  END IF;
+
+  -- Actualizar únicamente el status
+  UPDATE public.orders SET status = 'ARRIVED' WHERE id = p_order_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- RPC driver_mark_delivered
+CREATE OR REPLACE FUNCTION driver_mark_delivered(p_order_id UUID)
+RETURNS VOID
+SET search_path = public
+AS $$
+DECLARE
+  v_status TEXT;
+BEGIN
+  -- Verificar sesión
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  -- Verificar si es el conductor asignado
+  IF NOT is_order_driver(p_order_id) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  -- Obtener status
+  SELECT status INTO v_status FROM public.orders WHERE id = p_order_id;
+  
+  -- Exigir transición correcta
+  IF v_status != 'ARRIVED' THEN
+    RAISE EXCEPTION 'Invalid status transition. Order must be ARRIVED.';
+  END IF;
+
+  -- Actualizar únicamente el status
+  UPDATE public.orders SET status = 'DELIVERED' WHERE id = p_order_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
