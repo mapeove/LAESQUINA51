@@ -10,32 +10,28 @@ export default function AdminDriversPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Partial<DeliveryDriver> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const supabase = createClient();
 
-  useEffect(() => {
-    let ignore = false;
-    async function loadDrivers() {
-      const { data } = await supabase
-        .from('delivery_drivers')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (!ignore && data) {
-        setDrivers(data as DeliveryDriver[]);
-        setLoading(false);
-      }
+  const loadDrivers = async () => {
+    const { data } = await supabase
+      .from('delivery_drivers')
+      .select('*')
+      .order('name', { ascending: true });
+    if (data) {
+      setDrivers(data as DeliveryDriver[]);
     }
+  };
 
-    void loadDrivers();
-    return () => {
-      ignore = true;
-    };
+  useEffect(() => {
+    loadDrivers().finally(() => setLoading(false));
   }, [supabase]);
 
   const handleToggleActive = async (id: string, active: boolean) => {
     const { error } = await supabase.from('delivery_drivers').update({ active }).eq('id', id);
     if (!error) {
-      setDrivers(drivers.map(d => d.id === id ? { ...d, active } : d));
+      setDrivers(prev => prev.map(d => d.id === id ? { ...d, active } : d));
     }
   };
 
@@ -43,11 +39,12 @@ export default function AdminDriversPage() {
     if (!confirm('¿Eliminar este repartidor?')) return;
     const { error } = await supabase.from('delivery_drivers').delete().eq('id', id);
     if (!error) {
-      setDrivers(drivers.filter(d => d.id !== id));
+      setDrivers(prev => prev.filter(d => d.id !== id));
     }
   };
 
   const openModal = (driver: DeliveryDriver | null = null) => {
+    setSaveError(null);
     setEditingDriver(driver || {
       name: '',
       phone: '',
@@ -61,33 +58,47 @@ export default function AdminDriversPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingDriver?.name || !editingDriver.phone) return;
+    setIsSaving(true);
+    setSaveError(null);
 
-    const payload = {
-      name: editingDriver.name,
-      phone: editingDriver.phone,
-      vehicle_type: editingDriver.vehicle_type || 'MOTO',
-      notes: editingDriver.notes || null,
-      active: editingDriver.active ?? true,
-    };
+    try {
+      const payload = {
+        name: editingDriver.name,
+        phone: editingDriver.phone,
+        vehicle_type: editingDriver.vehicle_type || 'MOTO',
+        notes: editingDriver.notes || null,
+        active: editingDriver.active ?? true,
+      };
 
-    if (editingDriver.id) {
-      const { error } = await supabase.from('delivery_drivers').update(payload).eq('id', editingDriver.id);
-      if (!error) {
+      if (editingDriver.id) {
+        const { error } = await supabase.from('delivery_drivers').update(payload).eq('id', editingDriver.id);
+        if (error) throw error;
+        
         if (editingDriver.auth_email) {
-          await supabase.rpc('link_driver_by_email', { p_driver_id: editingDriver.id, p_email: editingDriver.auth_email });
+          const { error: rpcError } = await supabase.rpc('link_driver_by_email', { p_driver_id: editingDriver.id, p_email: editingDriver.auth_email });
+          if (rpcError) throw rpcError;
         }
-        setDrivers(drivers.map(d => d.id === editingDriver.id ? { ...d, ...payload } as DeliveryDriver : d));
+
+        await loadDrivers();
+        setIsModalOpen(false);
+      } else {
+        const { data, error } = await supabase.from('delivery_drivers').insert(payload).select().single();
+        if (error) throw error;
+        if (!data) throw new Error("No se devolvió el repartidor creado.");
+
+        if (editingDriver.auth_email) {
+          const { error: rpcError } = await supabase.rpc('link_driver_by_email', { p_driver_id: data.id, p_email: editingDriver.auth_email });
+          if (rpcError) throw rpcError;
+        }
+
+        await loadDrivers();
         setIsModalOpen(false);
       }
-    } else {
-      const { data, error } = await supabase.from('delivery_drivers').insert(payload).select().single();
-      if (!error && data) {
-        if (editingDriver.auth_email) {
-          await supabase.rpc('link_driver_by_email', { p_driver_id: data.id, p_email: editingDriver.auth_email });
-        }
-        setDrivers([...drivers, data as DeliveryDriver]);
-        setIsModalOpen(false);
-      }
+    } catch (err: any) {
+      console.error("Error saving driver:", err);
+      setSaveError(err.message || 'Error al guardar el repartidor. Revisa los datos.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -191,102 +202,113 @@ export default function AdminDriversPage() {
 
       {/* Modal */}
       {isModalOpen && editingDriver && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center sm:p-4 p-0">
+          <div className="bg-neutral-900 sm:border border-neutral-800 sm:rounded-2xl w-full sm:w-[94vw] md:max-w-[700px] h-[100dvh] sm:h-auto sm:max-h-[90dvh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-neutral-800 shrink-0 bg-neutral-900">
               <h3 className="text-xl font-bold font-mono">
                 {editingDriver.id ? 'Editar Repartidor' : 'Alta de Repartidor'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-neutral-400 hover:text-white">
-                <X size={20} />
+              <button onClick={() => setIsModalOpen(false)} className="text-neutral-400 hover:text-white p-2">
+                <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Nombre Completo *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingDriver.name || ''}
-                  onChange={(e) => setEditingDriver({ ...editingDriver, name: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
-                  placeholder="Ej: Carlos Gómez"
-                />
+            <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto">
+                {saveError && (
+                  <div className="p-3 bg-red-900/50 border border-red-500 rounded-xl text-red-200 text-sm">
+                    {saveError}
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1">Nombre Completo *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingDriver.name || ''}
+                    onChange={(e) => setEditingDriver({ ...editingDriver, name: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
+                    placeholder="Ej: Carlos Gómez"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1">Email de Cuenta App (Opcional)</label>
+                  <input
+                    type="email"
+                    value={editingDriver.auth_email || ''}
+                    onChange={(e) => setEditingDriver({ ...editingDriver, auth_email: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
+                    placeholder="Para vincular login"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1">Teléfono *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={editingDriver.phone || ''}
+                    onChange={(e) => setEditingDriver({ ...editingDriver, phone: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
+                    placeholder="612345678"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1">Tipo de Vehículo</label>
+                  <select
+                    value={editingDriver.vehicle_type || 'MOTO'}
+                    onChange={(e) => setEditingDriver({ ...editingDriver, vehicle_type: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
+                  >
+                    <option value="MOTO">Moto / Ciclomotor</option>
+                    <option value="BICI">Bicicleta / Patinete</option>
+                    <option value="COCHE">Coche</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1">Notas / Observaciones</label>
+                  <textarea
+                    rows={2}
+                    value={editingDriver.notes || ''}
+                    onChange={(e) => setEditingDriver({ ...editingDriver, notes: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2 pt-2 pb-4">
+                  <input
+                    type="checkbox"
+                    id="driver_active"
+                    checked={editingDriver.active ?? true}
+                    onChange={(e) => setEditingDriver({ ...editingDriver, active: e.target.checked })}
+                    className="w-4 h-4 rounded border-neutral-700 text-yellow-500 focus:ring-yellow-500 bg-neutral-800"
+                  />
+                  <label htmlFor="driver_active" className="text-xs font-medium text-neutral-300">Repartidor Activo</label>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Email de Cuenta App (Opcional)</label>
-                <input
-                  type="email"
-                  value={editingDriver.auth_email || ''}
-                  onChange={(e) => setEditingDriver({ ...editingDriver, auth_email: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
-                  placeholder="Para vincular login"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Teléfono *</label>
-                <input
-                  type="tel"
-                  required
-                  value={editingDriver.phone || ''}
-                  onChange={(e) => setEditingDriver({ ...editingDriver, phone: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
-                  placeholder="612345678"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Tipo de Vehículo</label>
-                <select
-                  value={editingDriver.vehicle_type || 'MOTO'}
-                  onChange={(e) => setEditingDriver({ ...editingDriver, vehicle_type: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
-                >
-                  <option value="MOTO">Moto / Ciclomotor</option>
-                  <option value="BICI">Bicicleta / Patinete</option>
-                  <option value="COCHE">Coche</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Notas / Observaciones</label>
-                <textarea
-                  rows={2}
-                  value={editingDriver.notes || ''}
-                  onChange={(e) => setEditingDriver({ ...editingDriver, notes: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-yellow-500 text-sm"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="driver_active"
-                  checked={editingDriver.active ?? true}
-                  onChange={(e) => setEditingDriver({ ...editingDriver, active: e.target.checked })}
-                  className="w-4 h-4 rounded border-neutral-700 text-yellow-500 focus:ring-yellow-500 bg-neutral-800"
-                />
-                <label htmlFor="driver_active" className="text-xs font-medium text-neutral-300">Repartidor Activo</label>
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 border border-neutral-700 rounded-xl font-bold text-neutral-300 hover:bg-neutral-800"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-3 rounded-xl font-bold text-black"
-                  style={{ backgroundColor: 'var(--brand-yellow)' }}
-                >
-                  Guardar
-                </button>
+              <div className="p-4 sm:p-6 border-t border-neutral-800 shrink-0 bg-neutral-900 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    disabled={isSaving}
+                    className="flex-1 py-3 border border-neutral-700 rounded-xl font-bold text-neutral-300 hover:bg-neutral-800 disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="flex-1 py-3 rounded-xl font-bold text-black flex items-center justify-center disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--brand-yellow)' }}
+                  >
+                    {isSaving ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
