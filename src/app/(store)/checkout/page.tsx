@@ -15,6 +15,7 @@ export default function CheckoutPage() {
 
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [storeClosed, setStoreClosed] = useState(false);
   const [error, setError] = useState('');
   const [bizumPhone, setBizumPhone] = useState('34633184354');
   const [userId, setUserId] = useState<string | null>(null);
@@ -70,15 +71,20 @@ export default function CheckoutPage() {
           }));
         }
 
-        // 3. Load Bizum Phone
+        // 3. Load Store Open & Bizum Phone
         const { data: settingsData } = await supabase
           .from('store_settings')
-          .select('value')
-          .eq('key', 'bizum_phone')
-          .single();
+          .select('key, value')
+          .in('key', ['bizum_phone', 'store_open']);
 
-        if (settingsData?.value) {
-          setBizumPhone(settingsData.value);
+        if (settingsData) {
+          const bizumSetting = settingsData.find(s => s.key === 'bizum_phone');
+          if (bizumSetting?.value) setBizumPhone(bizumSetting.value);
+          
+          const openSetting = settingsData.find(s => s.key === 'store_open');
+          if (openSetting && openSetting.value === 'false') {
+            setStoreClosed(true);
+          }
         }
         
         setCheckingAuth(false);
@@ -430,14 +436,21 @@ export default function CheckoutPage() {
 
         {error && <p className="text-xs font-medium text-center font-mono" style={{ color: '#A94F2F' }}>{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-4 rounded-2xl font-bold uppercase tracking-wider text-base shadow-md transition-transform active:scale-95 disabled:opacity-50"
-          style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
-        >
-          {loading ? 'CONFIRMANDO PEDIDO...' : 'CONFIRMAR Y REALIZAR PEDIDO'}
-        </button>
+        {storeClosed ? (
+          <div className="w-full p-4 rounded-2xl border text-center space-y-2" style={{ backgroundColor: '#F3E8CC', borderColor: '#A94F2F' }}>
+            <p className="font-bold uppercase tracking-wider text-sm" style={{ color: '#A94F2F' }}>El establecimiento está cerrado</p>
+            <p className="text-xs" style={{ color: '#65513F' }}>En este momento no podemos aceptar nuevos pedidos. Tu carrito se ha guardado para más tarde.</p>
+          </div>
+        ) : (
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 rounded-2xl font-bold uppercase tracking-wider text-base shadow-md transition-transform active:scale-95 disabled:opacity-50"
+            style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
+          >
+            {loading ? 'CONFIRMANDO PEDIDO...' : 'CONFIRMAR Y REALIZAR PEDIDO'}
+          </button>
+        )}
 
         <div className="flex items-center justify-center space-x-1 text-[10px] font-mono" style={{ color: '#65513F' }}>
           <ShieldCheck size={14} />

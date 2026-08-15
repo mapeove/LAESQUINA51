@@ -102,6 +102,7 @@ export default function OrderChat({ orderId, currentUserId, userRole }: OrderCha
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
 
     const { error } = await supabase.from('order_messages').insert({
+      id: optimisticMsg.id,
       order_id: orderId,
       sender_user_id: currentUserId,
       sender_role: userRole,

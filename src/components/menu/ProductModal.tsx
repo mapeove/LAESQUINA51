@@ -15,6 +15,7 @@ interface ProductModalProps {
 export function ProductModal({ product, onClose }: ProductModalProps) {
   const [quantity, setQuantity] = useState(1);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [storeClosed, setStoreClosed] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
   const supabase = createClient();
@@ -23,6 +24,15 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
     if (product.sold_out || isAdding) return;
     setIsAdding(true);
     
+    // Check if store is open
+    const { data: settings } = await supabase.from('store_settings').select('value').eq('key', 'store_open').single();
+    if (settings && settings.value === 'false') {
+      setStoreClosed(true);
+      setIsAdding(false);
+      return;
+    }
+
+    // Check user auth
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -47,17 +57,33 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
     onClose();
   };
 
+  if (storeClosed) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/70 backdrop-blur-sm animate-fade-up" onClick={onClose}>
+        <div className="w-full md:max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92dvh] border p-6 text-center" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }} onClick={e => e.stopPropagation()}>
+          <h2 className="text-2xl font-bold mb-4 uppercase" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>Local Cerrado</h2>
+          <p className="mb-6 text-sm" style={{ color: '#65513F' }}>Ahora mismo estamos cerrados. Podrás realizar tu pedido cuando volvamos a abrir.</p>
+          <div className="flex flex-col gap-3">
+            <button onClick={onClose} className="w-full py-4 rounded-2xl font-bold text-base transition-transform active:scale-95 shadow-lg uppercase" style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
+              Entendido
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (showLoginPrompt) {
     return (
       <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/70 backdrop-blur-sm animate-fade-up">
         <div className="w-full md:max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92dvh] border p-6 text-center" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
           <h2 className="text-2xl font-bold mb-4 uppercase" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>Iniciar Sesión</h2>
-          <p className="mb-6 text-sm" style={{ color: '#65513F' }}>Necesitas iniciar sesión o crear una cuenta para agregar productos al carrito y realizar pedidos.</p>
+          <p className="mb-6 text-sm" style={{ color: '#65513F' }}>Para realizar un pedido necesitas iniciar sesión.</p>
           <div className="flex flex-col gap-3">
-            <a href="/login" className="w-full py-4 rounded-2xl font-bold text-base transition-transform active:scale-95 shadow-lg uppercase" style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
+            <a href="/login" className="w-full py-4 rounded-2xl font-bold text-base transition-transform active:scale-95 shadow-lg uppercase block" style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
               Iniciar Sesión
             </a>
-            <a href="/registro" className="w-full py-4 rounded-2xl font-bold text-base transition-transform active:scale-95 shadow-sm uppercase border" style={{ backgroundColor: '#FFF7E5', borderColor: '#D4C4A0', color: '#3A2418', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
+            <a href="/registro" className="w-full py-4 rounded-2xl font-bold text-base transition-transform active:scale-95 shadow-sm uppercase block border" style={{ backgroundColor: '#FFF7E5', borderColor: '#D4C4A0', color: '#3A2418', fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
               Crear Cuenta
             </a>
             <button onClick={() => setShowLoginPrompt(false)} className="mt-2 text-sm font-bold uppercase underline" style={{ color: '#65513F' }}>

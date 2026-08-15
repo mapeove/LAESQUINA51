@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import type { CartItem } from '@/types';
 
 interface OrderRequestBody {
@@ -49,9 +49,11 @@ export async function POST(request: Request) {
 
     const cleanPhone = customer_phone.replace(/\s+/g, '');
 
-    let supabase;
+    let adminSupabase;
+    let authSupabase;
     try {
-      supabase = await createAdminClient();
+      adminSupabase = await createAdminClient();
+      authSupabase = await createClient();
     } catch {
       // Dev fallback mode
       console.warn('Supabase not configured, using mock order');
@@ -59,8 +61,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, orderNumber: mockNumber });
     }
 
+    // Check Auth
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Debes iniciar sesión para realizar un pedido' }, { status: 401 });
+    }
+
+    // Check Store Open
+    const { data: settings } = await adminSupabase.from('store_settings').select('value').eq('key', 'store_open').single();
+    if (settings && settings.value === 'false') {
+      return NextResponse.json({ error: 'El establecimiento está cerrado. No se aceptan nuevos pedidos.' }, { status: 403, statusText: 'STORE_CLOSED' });
+    }
+
     // Generate order number based on count
-    const { count } = await supabase
+    const { count } = await adminSupabase
       .from('orders')
       .select('*', { count: 'exact', head: true });
 
@@ -78,7 +92,7 @@ export async function POST(request: Request) {
       .join(', ');
 
     // Insert order
-    const { data: orderData, error: orderError } = await supabase
+    const { data: orderData, error: orderError } = await adminSupabase
       .from('orders')
       .insert({
         order_number: orderNumber,
@@ -115,7 +129,7 @@ export async function POST(request: Request) {
       item_total: item.line_total,
     }));
 
-    const { error: itemsError } = await supabase
+    const { error: itemsError } = await adminSupabase
       .from('order_items')
       .insert(orderItems);
 
