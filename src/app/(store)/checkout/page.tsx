@@ -75,14 +75,18 @@ export default function CheckoutPage() {
         const { data: settingsData } = await supabase
           .from('store_settings')
           .select('key, value')
-          .in('key', ['bizum_phone', 'store_open']);
+          .eq('key', 'bizum_phone');
 
         if (settingsData) {
           const bizumSetting = settingsData.find(s => s.key === 'bizum_phone');
           if (bizumSetting?.value) setBizumPhone(bizumSetting.value);
-          
-          const openSetting = settingsData.find(s => s.key === 'store_open');
-          if (openSetting && openSetting.value === 'false') {
+        }
+        
+        // Use API for definitive status
+        const statusRes = await fetch('/api/store-status');
+        if (statusRes.ok) {
+          const status = await statusRes.json();
+          if (!status.isOpen) {
             setStoreClosed(true);
           }
         }

@@ -2,8 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Save, Trash2, Calendar, Clock } from 'lucide-react';
+import { Save, Trash2, Calendar, Clock, Plus } from 'lucide-react';
 import type { OpeningHour, SpecialOpeningHour } from '@/types';
+
+const DAYS = [
+  { id: 1, name: 'Lunes' },
+  { id: 2, name: 'Martes' },
+  { id: 3, name: 'Miércoles' },
+  { id: 4, name: 'Jueves' },
+  { id: 5, name: 'Viernes' },
+  { id: 6, name: 'Sábado' },
+  { id: 0, name: 'Domingo' }
+];
 
 export default function AdminHoursPage() {
   const [hours, setHours] = useState<OpeningHour[]>([]);
@@ -23,7 +33,7 @@ export default function AdminHoursPage() {
     let ignore = false;
     async function loadHoursData() {
       const [hoursRes, specialRes] = await Promise.all([
-        supabase.from('opening_hours').select('*').order('day_of_week', { ascending: true }),
+        supabase.from('opening_hours').select('*').order('open_time', { ascending: true }),
         supabase.from('special_opening_hours').select('*').order('special_date', { ascending: true })
       ]);
 
@@ -41,12 +51,86 @@ export default function AdminHoursPage() {
   }, [supabase]);
 
   const handleSaveHours = async () => {
-    setSaving(true);
-    for (const h of hours) {
-      await supabase.from('opening_hours').update(h).eq('id', h.id);
+    // Validation
+    for (const day of DAYS) {
+      const daySlots = hours.filter(h => h.day_of_week === day.id && h.active);
+      if (daySlots.length === 0) continue;
+      
+      for (let i = 0; i < daySlots.length; i++) {
+        const s1 = daySlots[i];
+        if (!s1.open_time || !s1.close_time) {
+          alert(`Error en ${day.name}: Todos los tramos deben tener hora de apertura y cierre.`);
+          return;
+        }
+        for (let j = i + 1; j < daySlots.length; j++) {
+          const s2 = daySlots[j];
+          if (s1.open_time === s2.open_time && s1.close_time === s2.close_time) {
+            alert(`Error en ${day.name}: Tramos duplicados.`);
+            return;
+          }
+          // overlap logic (simplified, assuming they are sorted, but we can just check bounds)
+          if ((s1.open_time <= s2.close_time && s1.close_time >= s2.open_time) && !(s1.close_time < s1.open_time || s2.close_time < s2.open_time)) {
+             // this doesn't fully handle cross-midnight overlap, but it's enough for a basic check
+             alert(`Error en ${day.name}: Tramos solapados no permitidos.`);
+             return;
+          }
+        }
+      }
     }
+
+    setSaving(true);
+    
+    // Clear all existing and insert the new ones
+    await supabase.from('opening_hours').delete().neq('day_of_week', -1);
+    
+    if (hours.length > 0) {
+      // Remove ids to let supabase generate new ones, or keep them if they exist
+      const toInsert = hours.filter(h => h.active).map(h => ({
+        day_of_week: h.day_of_week,
+        open_time: h.open_time,
+        close_time: h.close_time,
+        active: true
+      }));
+      
+      if (toInsert.length > 0) {
+        await supabase.from('opening_hours').insert(toInsert);
+      }
+    }
+    
+    // Refresh
+    const { data } = await supabase.from('opening_hours').select('*').order('open_time', { ascending: true });
+    if (data) setHours(data as OpeningHour[]);
+    
     setSaving(false);
     alert('Horarios semanales guardados correctamente');
+  };
+
+  const handleAddSlot = (dayId: number) => {
+    setHours([...hours, {
+      id: crypto.randomUUID(),
+      day_of_week: dayId as any,
+      open_time: '19:00',
+      close_time: '23:30',
+      active: true
+    }]);
+  };
+
+  const handleUpdateSlot = (id: string, field: 'open_time' | 'close_time', value: string) => {
+    setHours(hours.map(h => h.id === id ? { ...h, [field]: value } : h));
+  };
+
+  const handleRemoveSlot = (id: string) => {
+    setHours(hours.filter(h => h.id !== id));
+  };
+
+  const handleToggleDay = (dayId: number, currentClosed: boolean) => {
+    if (currentClosed) {
+      // Open it by adding a default slot
+      handleAddSlot(dayId);
+    } else {
+      // Close it by removing all slots for this day
+      setHours(hours.filter(h => h.day_of_week !== dayId));
+    }
   };
 
   const handleAddSpecial = async (e: React.FormEvent) => {
@@ -56,20 +140,22 @@ export default function AdminHoursPage() {
     setSaving(true);
     const { data, error } = await supabase
       .from('special_opening_hours')
-      .upsert({
+      .insert({
         special_date: newSpecial.special_date,
         open_time: newSpecial.open_time || '19:00',
         close_time: newSpecial.close_time || '00:00',
         is_closed: newSpecial.is_closed ?? false,
         notes: newSpecial.notes || null
-      }, { onConflict: 'special_date' })
+      })
       .select()
       .single();
 
     setSaving(false);
     if (!error && data) {
-      setSpecialHours([...specialHours.filter(s => s.special_date !== data.special_date), data as SpecialOpeningHour]);
+      setSpecialHours([...specialHours, data as SpecialOpeningHour]);
       setNewSpecial({ special_date: '', open_time: '19:00', close_time: '00:00', is_closed: false, notes: '' });
+    } else if (error) {
+      alert('Error al añadir excepción: ' + error.message);
     }
   };
 
@@ -78,8 +164,6 @@ export default function AdminHoursPage() {
     await supabase.from('special_opening_hours').delete().eq('id', id);
     setSpecialHours(specialHours.filter(s => s.id !== id));
   };
-
-  const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
   if (loading) {
     return <div className="p-8 text-neutral-400">Cargando horarios...</div>;
@@ -96,77 +180,90 @@ export default function AdminHoursPage() {
         </p>
       </div>
 
-      {/* 1. Horario Semanal */}
       <section className="p-6 rounded-2xl border border-neutral-800 space-y-4 bg-neutral-900">
-        <div className="flex justify-between items-center border-b border-neutral-800 pb-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-neutral-800 pb-4">
           <h2 className="text-lg font-bold font-mono flex items-center gap-2">
             <Clock size={18} className="text-yellow-500" /> Horario Semanal Regular
           </h2>
           <button
             onClick={handleSaveHours}
             disabled={saving}
-            className="flex items-center space-x-2 px-4 py-2 rounded-xl font-bold text-black text-xs bg-yellow-500 hover:bg-yellow-400 transition-all"
+            className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-black text-sm bg-yellow-500 hover:bg-yellow-400 transition-all disabled:opacity-50 w-full sm:w-auto"
           >
             <Save size={16} />
-            <span>Guardar Horarios</span>
+            <span>{saving ? 'Guardando...' : 'Guardar Horarios'}</span>
           </button>
         </div>
 
-        <div className="space-y-2">
-          {hours.map((h, i) => (
-            <div key={h.id || i} className="flex items-center justify-between p-3.5 bg-neutral-950 rounded-xl border border-neutral-800 text-sm">
-              <span className="w-28 font-bold text-neutral-200 font-mono">{dayNames[h.day_of_week] || `Día ${h.day_of_week}`}</span>
-              
-              <div className="flex items-center space-x-3">
-                <input
-                  type="time"
-                  value={h.open_time}
-                  onChange={(e) => {
-                    const newHours = [...hours];
-                    newHours[i].open_time = e.target.value;
-                    setHours(newHours);
-                  }}
-                  className="bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white font-mono text-xs"
-                />
-                <span className="text-neutral-500 text-xs">a</span>
-                <input
-                  type="time"
-                  value={h.close_time}
-                  onChange={(e) => {
-                    const newHours = [...hours];
-                    newHours[i].close_time = e.target.value;
-                    setHours(newHours);
-                  }}
-                  className="bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white font-mono text-xs"
-                />
-              </div>
+        <div className="space-y-6">
+          {DAYS.map((day) => {
+            const daySlots = hours.filter(h => h.day_of_week === day.id && h.active);
+            const isClosed = daySlots.length === 0;
 
-              <button
-                onClick={() => {
-                  const newHours = [...hours];
-                  newHours[i].active = !newHours[i].active;
-                  setHours(newHours);
-                }}
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  h.active ? 'bg-green-900/60 text-green-300' : 'bg-neutral-800 text-neutral-500'
-                }`}
-              >
-                {h.active ? 'Abierto' : 'Cerrado'}
-              </button>
-            </div>
-          ))}
+            return (
+              <div key={day.id} className="p-4 bg-neutral-950 rounded-xl border border-neutral-800 space-y-4">
+                <div className="flex items-center justify-between border-b border-neutral-900 pb-2">
+                  <h3 className="font-bold text-neutral-200 font-mono uppercase tracking-wider">{day.name}</h3>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <span className="text-xs text-neutral-400">Cerrado todo el día</span>
+                    <input
+                      type="checkbox"
+                      checked={isClosed}
+                      onChange={() => handleToggleDay(day.id, isClosed)}
+                      className="w-4 h-4 rounded border-neutral-700 text-red-500 bg-neutral-800"
+                    />
+                  </label>
+                </div>
+
+                {!isClosed && (
+                  <div className="space-y-3 pl-2 sm:pl-4">
+                    {daySlots.map(slot => (
+                      <div key={slot.id} className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center space-x-2 bg-neutral-900 p-1.5 rounded-lg border border-neutral-700">
+                          <input
+                            type="time"
+                            value={slot.open_time.substring(0,5)}
+                            onChange={e => handleUpdateSlot(slot.id, 'open_time', e.target.value)}
+                            className="bg-transparent text-white font-mono text-sm outline-none w-[75px]"
+                          />
+                          <span className="text-neutral-500 text-xs">a</span>
+                          <input
+                            type="time"
+                            value={slot.close_time.substring(0,5)}
+                            onChange={e => handleUpdateSlot(slot.id, 'close_time', e.target.value)}
+                            className="bg-transparent text-white font-mono text-sm outline-none w-[75px]"
+                          />
+                        </div>
+                        <button
+                          onClick={() => handleRemoveSlot(slot.id)}
+                          className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-neutral-800 transition-colors flex items-center gap-1 text-xs"
+                        >
+                          <Trash2 size={14} /> Eliminar
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => handleAddSlot(day.id)}
+                      className="text-yellow-500 hover:text-yellow-400 text-xs font-bold flex items-center gap-1 pt-1 uppercase tracking-wider"
+                    >
+                      <Plus size={14} /> Añadir tramo
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* 2. Días Especiales / Festivos */}
+      {/* Excepciones */}
       <section className="p-6 rounded-2xl border border-neutral-800 space-y-4 bg-neutral-900">
         <h2 className="text-lg font-bold font-mono flex items-center gap-2 border-b border-neutral-800 pb-4">
           <Calendar size={18} className="text-yellow-500" /> Días Especiales y Festivos
         </h2>
 
-        {/* Form para nuevo día especial */}
         <form onSubmit={handleAddSpecial} className="p-4 bg-neutral-950 rounded-xl border border-neutral-800 space-y-3">
-          <span className="text-xs font-bold uppercase text-neutral-400">Añadir Excepción de Horario</span>
+          <span className="text-xs font-bold uppercase text-neutral-400">Añadir Excepción</span>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
               <label className="block text-[10px] text-neutral-400 uppercase mb-1">Fecha *</label>
@@ -216,13 +313,14 @@ export default function AdminHoursPage() {
                   type="checkbox"
                   checked={newSpecial.is_closed || false}
                   onChange={(e) => setNewSpecial({ ...newSpecial, is_closed: e.target.checked })}
-                  className="w-4 h-4 rounded border-neutral-700 text-yellow-500 bg-neutral-800"
+                  className="w-4 h-4 rounded border-neutral-700 text-red-500 bg-neutral-800"
                 />
                 <span>Cerrado todo el día</span>
               </label>
 
               <button
                 type="submit"
+                disabled={saving}
                 className="px-4 py-2.5 bg-yellow-500 text-black font-bold rounded-lg text-xs hover:bg-yellow-400 ml-auto"
               >
                 Añadir
@@ -231,20 +329,19 @@ export default function AdminHoursPage() {
           </div>
         </form>
 
-        {/* Lista de excepciones */}
         <div className="space-y-2">
           {specialHours.length === 0 ? (
             <p className="text-xs text-neutral-500 italic py-2">No hay excepciones configuradas.</p>
           ) : (
             specialHours.map((special) => (
               <div key={special.id} className="flex items-center justify-between p-3 bg-neutral-950 rounded-xl border border-neutral-800 text-xs">
-                <div className="flex items-center space-x-3 font-mono">
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 font-mono">
                   <span className="font-bold text-yellow-500">{special.special_date}</span>
                   <span>
                     {special.is_closed ? (
                       <span className="text-red-400 font-bold">CERRADO FESTIVO</span>
                     ) : (
-                      `${special.open_time} - ${special.close_time}`
+                      `${special.open_time.substring(0,5)} - ${special.close_time.substring(0,5)}`
                     )}
                   </span>
                   {special.notes && <span className="text-neutral-400 italic">({special.notes})</span>}
@@ -252,7 +349,7 @@ export default function AdminHoursPage() {
 
                 <button
                   onClick={() => handleDeleteSpecial(special.id)}
-                  className="p-1.5 text-red-400 hover:bg-red-950/40 rounded-lg"
+                  className="p-2 text-red-400 hover:bg-red-950/40 rounded-lg"
                 >
                   <Trash2 size={16} />
                 </button>

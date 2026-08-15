@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
+import { getStoreStatus } from '@/lib/store-status';
 import type { CartItem } from '@/types';
 
 interface OrderRequestBody {
@@ -68,8 +69,8 @@ export async function POST(request: Request) {
     }
 
     // Check Store Open
-    const { data: settings } = await adminSupabase.from('store_settings').select('value').eq('key', 'store_open').single();
-    if (settings && settings.value === 'false') {
+    const storeStatus = await getStoreStatus(adminSupabase);
+    if (!storeStatus.isOpen) {
       return NextResponse.json({ error: 'El establecimiento está cerrado. No se aceptan nuevos pedidos.' }, { status: 403, statusText: 'STORE_CLOSED' });
     }
 

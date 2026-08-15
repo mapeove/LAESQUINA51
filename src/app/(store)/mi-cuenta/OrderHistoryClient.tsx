@@ -134,11 +134,14 @@ export default function OrderHistoryClient({ pastOrders }: { pastOrders: Order[]
         }
       }
 
-      const { data: settings } = await supabase.from('store_settings').select('value').eq('key', 'store_open').single();
-      if (settings && settings.value === 'false') {
-        alert('Ahora mismo estamos cerrados. Podrás realizar tu pedido cuando volvamos a abrir.');
-        setIsRepeating(false);
-        return;
+      const statusRes = await fetch('/api/store-status');
+      if (statusRes.ok) {
+        const status = await statusRes.json();
+        if (!status.isOpen) {
+          alert('Ahora mismo estamos cerrados. Podrás realizar tu pedido cuando volvamos a abrir.');
+          setIsRepeating(false);
+          return;
+        }
       }
 
       // Add to cart

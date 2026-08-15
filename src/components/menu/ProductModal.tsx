@@ -25,11 +25,14 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
     setIsAdding(true);
     
     // Check if store is open
-    const { data: settings } = await supabase.from('store_settings').select('value').eq('key', 'store_open').single();
-    if (settings && settings.value === 'false') {
-      setStoreClosed(true);
-      setIsAdding(false);
-      return;
+    const statusRes = await fetch('/api/store-status');
+    if (statusRes.ok) {
+      const status = await statusRes.json();
+      if (!status.isOpen) {
+        setStoreClosed(true);
+        setIsAdding(false);
+        return;
+      }
     }
 
     // Check user auth

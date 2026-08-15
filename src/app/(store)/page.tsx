@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Flame, ShoppingBag, MapPin, Clock, ArrowRight } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import { getStoreStatus } from '@/lib/store-status';
 import { PromoModal } from '@/components/promo/PromoModal';
 import { StickyCartBar } from '@/components/cart/StickyCartBar';
 import { InteractiveProductCard } from '@/components/home/InteractiveProductCard';
@@ -54,8 +55,8 @@ export default async function HomePage() {
   const pIncondicional = products.find(p => p.slug === 'la-incondicional');
   const pGhosteo = products.find(p => p.slug === 'el-ghosteo');
 
-  const storeOpenSetting = settingsData?.find(s => s.key === 'store_open');
-  const isStoreOpen = storeOpenSetting ? storeOpenSetting.value === 'true' : true;
+  const storeStatus = await getStoreStatus(supabase);
+  const isStoreOpen = storeStatus.isOpen;
 
   return (
     <main className="min-h-screen pb-24 font-sans selection:bg-[#B88727] selection:text-white" style={{ backgroundColor: '#F3E8CC', color: '#3A2418' }}>

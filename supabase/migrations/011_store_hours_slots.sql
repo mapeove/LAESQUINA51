@@ -1,0 +1,1 @@
+ALTER TABLE special_opening_hours DROP CONSTRAINT IF EXISTS special_opening_hours_special_date_key;
