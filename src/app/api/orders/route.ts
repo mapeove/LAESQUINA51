@@ -9,6 +9,7 @@ interface OrderRequestBody {
   customer_email?: string;
   delivery_address: string;
   delivery_postal_code: string;
+  zone_id: string;
   delivery_zone: string;
   delivery_floor?: string;
   delivery_door?: string;
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
       customer_email,
       delivery_address,
       delivery_postal_code,
-      delivery_zone,
+      zone_id,
       delivery_floor,
       delivery_door,
       notes,
@@ -39,12 +40,10 @@ export async function POST(request: Request) {
       cash_change_for,
       items,
       subtotal,
-      delivery_fee,
-      total,
     } = body;
 
     // Validate required fields
-    if (!customer_name || !customer_phone || !delivery_address || !delivery_postal_code || !delivery_zone || !items || items.length === 0) {
+    if (!customer_name || !customer_phone || !delivery_address || !delivery_postal_code || !zone_id || !items || items.length === 0) {
       return NextResponse.json({ error: 'Faltan campos requeridos para el pedido' }, { status: 400 });
     }
 
@@ -77,8 +76,9 @@ export async function POST(request: Request) {
     // Validate Zone and calculate delivery fee
     const { data: zoneData } = await adminSupabase
       .from('delivery_zones')
-      .select('delivery_fee')
-      .eq('name', delivery_zone)
+      .select('delivery_fee, name')
+      .eq('id', zone_id)
+      .eq('active', true)
       .single();
 
     if (!zoneData) {
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       delivery_floor ? `Piso ${delivery_floor}` : null,
       delivery_door ? `Puerta ${delivery_door}` : null,
       delivery_postal_code,
-      delivery_zone,
+      zoneData.name, // Secure name from DB
     ]
       .filter(Boolean)
       .join(', ');
@@ -121,7 +121,8 @@ export async function POST(request: Request) {
         delivery_address: fullAddress,
         delivery_floor: delivery_floor ?? null,
         delivery_door: delivery_door ?? null,
-        delivery_zone_name: delivery_zone,
+        delivery_zone_id: zone_id,
+        delivery_zone_name: zoneData.name,
         subtotal,
         delivery_fee: secureDeliveryFee,
         total: secureTotal,

@@ -254,6 +254,7 @@ export interface CheckoutFormData {
   customer_email: string
   delivery_address: string
   delivery_postal_code: string
+  zone_id: string
   delivery_zone: string
   delivery_floor: string
   delivery_door: string

@@ -31,6 +31,7 @@ export default function CheckoutPage() {
     customer_email: '',
     delivery_address: '',
     delivery_postal_code: '41007',
+    zone_id: '',
     delivery_zone: 'Polígono San Pablo / 41007',
     delivery_floor: '',
     delivery_door: '',
@@ -108,6 +109,7 @@ export default function CheckoutPage() {
           setSelectedZone(zones[0]);
           setFormData(prev => ({
             ...prev,
+            zone_id: zones[0].id,
             delivery_zone: zones[0].name
           }));
         }
@@ -336,18 +338,20 @@ export default function CheckoutPage() {
               <div>
                 <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Zona de Reparto *</label>
                 <select
-                  value={formData.delivery_zone}
+                  value={formData.zone_id}
                   onChange={(e) => {
-                    const zoneName = e.target.value;
-                    setFormData({ ...formData, delivery_zone: zoneName });
-                    const zone = deliveryZones.find(z => z.name === zoneName);
-                    if (zone) setSelectedZone(zone);
+                    const id = e.target.value;
+                    const zone = deliveryZones.find(z => z.id === id);
+                    if (zone) {
+                      setFormData({ ...formData, zone_id: zone.id, delivery_zone: zone.name });
+                      setSelectedZone(zone);
+                    }
                   }}
                   className="w-full p-3 rounded-xl text-sm font-medium focus:outline-none"
                   style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 >
                   {deliveryZones.map(zone => (
-                    <option key={zone.id} value={zone.name}>
+                    <option key={zone.id} value={zone.id}>
                       {zone.name}
                     </option>
                   ))}
