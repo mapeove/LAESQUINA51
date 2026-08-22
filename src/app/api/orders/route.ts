@@ -90,12 +90,25 @@ export async function POST(request: Request) {
     // We trust subtotal for now as products can be complex, but recalculate the final total
     const secureTotal = Number(subtotal) + secureDeliveryFee;
 
-    // Generate order number based on count
-    const { count } = await adminSupabase
+    // Generate order number based on the maximum existing order number
+    const { data: maxOrders } = await adminSupabase
       .from('orders')
-      .select('*', { count: 'exact', head: true });
+      .select('order_number')
+      .order('order_number', { ascending: false })
+      .limit(1);
 
-    const nextNum = (count ?? 0) + 1;
+    const maxOrder = maxOrders?.[0];
+
+    let nextNum = 1;
+    if (maxOrder && maxOrder.order_number) {
+      // Extraemos el número de "E51-XXXXXX"
+      const match = maxOrder.order_number.match(/E51-(\d+)/);
+      if (match && match[1]) {
+        nextNum = parseInt(match[1], 10) + 1;
+      }
+    }
+    
+    // Si falla el parseo o no hay orders, nextNum será 1 (o count + 1 como fallback si quisiéramos)
     const orderNumber = `E51-${String(nextNum).padStart(6, '0')}`;
 
     const fullAddress = [
@@ -156,8 +169,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, orderNumber });
   } catch (error: unknown) {
     console.error('Order creation error:', error);
+    // Para depuración temporal devolvemos el error exacto
+    const err = error as Error | { details?: string; message?: string };
     return NextResponse.json(
-      { error: 'Error al procesar el pedido. Inténtalo de nuevo.' },
+      { error: err?.message || err?.details || 'Error al procesar el pedido' },
       { status: 500 }
     );
   }
