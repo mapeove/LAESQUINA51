@@ -55,7 +55,7 @@ const FALLBACK_PRODUCTS: Product[] = [
 
 export const metadata = {
   title: 'Menú | La Esquina 51 – Venezuelan Street Food en Sevilla',
-  description: 'Hamburguesas, boxes, perros calientes, shawarma y empanadas venezolanas. Pide ahora con envío gratis.',
+  description: 'Hamburguesas, boxes, perros calientes, shawarma y empanadas venezolanas. Pide ahora tu delivery.',
 };
 
 export default async function MenuPage() {

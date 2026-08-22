@@ -69,7 +69,7 @@ export default async function HomePage() {
       {/* Top Street Banner */}
       <div className="py-2.5 px-4 font-mono text-xs font-bold text-center tracking-wider uppercase overflow-hidden whitespace-nowrap shadow-sm" style={{ backgroundColor: '#B88727', color: '#FFF7E5' }}>
         <div className="inline-block animate-pulse">
-          🛵 ENVÍO GRATIS EN TODA LA ZONA DE REPARTO DE SEVILLA · SABOR VENEZOLANO 100% REAL 🇻🇪
+          🛵 PIDE AHORA PARA LLEVAR EN SEVILLA · SABOR VENEZOLANO 100% REAL 🇻🇪
         </div>
       </div>
 

@@ -12,8 +12,7 @@ export function BottomNav() {
   const tabs = [
     { name: 'Inicio', href: '/', icon: Home },
     { name: 'Menú', href: '/menu', icon: UtensilsCrossed },
-    { name: 'Pedido', href: '/cart', icon: ShoppingCart, badge: totalItems },
-    { name: 'Pedidos', href: '/mi-cuenta', icon: ClipboardList },
+    { name: 'Pedido', href: totalItems > 0 ? '/cart' : '/mi-cuenta', icon: totalItems > 0 ? ShoppingCart : ClipboardList, badge: totalItems },
     { name: 'Mi Cuenta', href: '/mi-cuenta', icon: User },
   ];
 

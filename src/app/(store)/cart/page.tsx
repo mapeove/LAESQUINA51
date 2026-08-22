@@ -170,10 +170,6 @@ export default function CartPage() {
                 <span>Subtotal</span>
                 <span className="font-bold font-mono" style={{ color: '#3A2418' }}>{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between" style={{ color: '#65513F' }}>
-                <span>Envío</span>
-                <span className="font-bold font-mono text-emerald-700">GRATIS</span>
-              </div>
             </div>
 
             <div className="border-t pt-4 mb-5" style={{ borderColor: '#E8D5A8' }}>

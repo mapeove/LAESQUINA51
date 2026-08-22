@@ -74,6 +74,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'El establecimiento está cerrado. No se aceptan nuevos pedidos.' }, { status: 403, statusText: 'STORE_CLOSED' });
     }
 
+    // Validate Zone and calculate delivery fee
+    const { data: zoneData } = await adminSupabase
+      .from('delivery_zones')
+      .select('delivery_fee')
+      .eq('name', delivery_zone)
+      .single();
+
+    if (!zoneData) {
+       return NextResponse.json({ error: 'Zona de reparto no válida' }, { status: 400 });
+    }
+
+    const secureDeliveryFee = Number(zoneData.delivery_fee) || 0;
+    
+    // We trust subtotal for now as products can be complex, but recalculate the final total
+    const secureTotal = Number(subtotal) + secureDeliveryFee;
+
     // Generate order number based on count
     const { count } = await adminSupabase
       .from('orders')
@@ -107,8 +123,8 @@ export async function POST(request: Request) {
         delivery_door: delivery_door ?? null,
         delivery_zone_name: delivery_zone,
         subtotal,
-        delivery_fee,
-        total,
+        delivery_fee: secureDeliveryFee,
+        total: secureTotal,
         notes: notes ?? null,
         payment_method: payment_method || 'CASH',
         cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,

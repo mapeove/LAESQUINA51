@@ -7,6 +7,7 @@ import { formatPrice } from '@/lib/utils';
 import { Banknote, Wallet, ArrowLeft, ShieldCheck, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import type { DeliveryZone } from '@/types';
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
@@ -19,6 +20,10 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [bizumPhone, setBizumPhone] = useState('34633184354');
   const [userId, setUserId] = useState<string | null>(null);
+  
+  // Delivery Zones Configured in Admin
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [selectedZone, setSelectedZone] = useState<DeliveryZone | null>(null);
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -91,6 +96,22 @@ export default function CheckoutPage() {
           }
         }
         
+        // 4. Load Delivery Zones
+        const { data: zones } = await supabase
+          .from('delivery_zones')
+          .select('*')
+          .eq('active', true)
+          .order('name');
+          
+        if (zones && zones.length > 0) {
+          setDeliveryZones(zones);
+          setSelectedZone(zones[0]);
+          setFormData(prev => ({
+            ...prev,
+            delivery_zone: zones[0].name
+          }));
+        }
+
         setCheckingAuth(false);
       }
     }
@@ -132,7 +153,8 @@ export default function CheckoutPage() {
     );
   }
 
-  const DELIVERY_FEE = 1.00; // Envío = 1.00 €
+  // Calculate delivery fee
+  const DELIVERY_FEE = selectedZone?.delivery_fee ? Number(selectedZone.delivery_fee) : 0;
   const total = subtotal + DELIVERY_FEE;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -315,16 +337,23 @@ export default function CheckoutPage() {
                 <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Zona de Reparto *</label>
                 <select
                   value={formData.delivery_zone}
-                  onChange={(e) => setFormData({ ...formData, delivery_zone: e.target.value })}
+                  onChange={(e) => {
+                    const zoneName = e.target.value;
+                    setFormData({ ...formData, delivery_zone: zoneName });
+                    const zone = deliveryZones.find(z => z.name === zoneName);
+                    if (zone) setSelectedZone(zone);
+                  }}
                   className="w-full p-3 rounded-xl text-sm font-medium focus:outline-none"
                   style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
                 >
-                  <option value="Polígono San Pablo / 41007">Polígono San Pablo (41007)</option>
-                  <option value="La Macarena">La Macarena</option>
-                  <option value="Centro / Casco Antiguo">Centro / Casco Antiguo</option>
-                  <option value="Hytasa">Hytasa</option>
-                  <option value="El Corte Inglés Nervión">El Corte Inglés Nervión</option>
-                  <option value="Otros alrededores">Otros alrededores</option>
+                  {deliveryZones.map(zone => (
+                    <option key={zone.id} value={zone.name}>
+                      {zone.name}
+                    </option>
+                  ))}
+                  {deliveryZones.length === 0 && (
+                    <option value="">Cargando zonas...</option>
+                  )}
                 </select>
               </div>
             </div>
