@@ -170,9 +170,17 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error('Order creation error:', error);
     // Para depuración temporal devolvemos el error exacto
-    const err = error as Error | { details?: string; message?: string };
+    let errorMessage = 'Error al procesar el pedido';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error && typeof error === 'object') {
+      const e = error as Record<string, unknown>;
+      if (e.message) errorMessage = String(e.message);
+      else if (e.details) errorMessage = String(e.details);
+    }
+    
     return NextResponse.json(
-      { error: err?.message || err?.details || 'Error al procesar el pedido' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
