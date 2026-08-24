@@ -50,11 +50,6 @@ export default async function HomePage() {
 
   const featuredProducts = products.filter(p => p.featured);
 
-  const pCasiTriple = products.find(p => p.slug === 'la-casi-triple');
-  const pAmarreArabe = products.find(p => p.slug === 'el-amarre-arabe');
-  const pIncondicional = products.find(p => p.slug === 'la-incondicional');
-  const pGhosteo = products.find(p => p.slug === 'el-ghosteo');
-
   const storeStatus = await getStoreStatus(supabase);
   const isStoreOpen = storeStatus.isOpen;
 
@@ -121,10 +116,9 @@ export default async function HomePage() {
           {/* Editorial Real Photography Collage */}
           <div className="w-full max-w-5xl pt-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              {pCasiTriple && <InteractiveProductCard product={pCasiTriple} variant="collage" />}
-              {pAmarreArabe && <InteractiveProductCard product={pAmarreArabe} variant="collage" />}
-              {pIncondicional && <InteractiveProductCard product={pIncondicional} variant="collage" />}
-              {pGhosteo && <InteractiveProductCard product={pGhosteo} variant="collage" />}
+              {products.map((product) => (
+                <InteractiveProductCard key={product.id} product={product} variant="collage" />
+              ))}
             </div>
           </div>
         </div>
