@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Edit2, Trash2, X, Megaphone, Copy, Image as ImageIcon, Video } from 'lucide-react';
+import { MediaUpload } from '../productos/MediaUpload';
 import type { Product } from '@/types';
 
 interface Campaign {
@@ -35,6 +36,7 @@ export default function AdminCampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   const [formData, setFormData] = useState<Partial<Campaign>>({
     title: '',
@@ -394,18 +396,20 @@ export default function AdminCampaignsPage() {
                     </div>
                     
                     <div className="space-y-1.5">
-                      <label className="text-xs text-neutral-400 uppercase font-mono font-bold">
-                        {formData.media_type === 'IMAGE' ? 'URL de Imagen' : 'URL de Video'}
-                      </label>
-                      <input 
-                        type="text" 
-                        value={formData.media_type === 'IMAGE' ? formData.image_url || '' : formData.video_url || ''} 
-                        onChange={e => {
-                          if (formData.media_type === 'IMAGE') setFormData({...formData, image_url: e.target.value});
-                          else setFormData({...formData, video_url: e.target.value});
-                        }} 
-                        className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-base text-white focus:border-yellow-500 focus:outline-none" 
-                        placeholder="https://"
+                      <MediaUpload
+                        label={formData.media_type === 'IMAGE' ? 'Imagen de la campaña' : 'Video de la campaña'}
+                        type={formData.media_type === 'IMAGE' ? 'image' : 'video'}
+                        currentUrl={(formData.media_type === 'IMAGE' ? formData.image_url : formData.video_url) || ''}
+                        onUploadSuccess={(url) => {
+                          if (formData.media_type === 'IMAGE') setFormData({...formData, image_url: url});
+                          else setFormData({...formData, video_url: url});
+                        }}
+                        onRemove={() => {
+                          if (formData.media_type === 'IMAGE') setFormData({...formData, image_url: ''});
+                          else setFormData({...formData, video_url: ''});
+                        }}
+                        isUploading={isUploading}
+                        setIsUploading={setIsUploading}
                       />
                     </div>
                   </div>
@@ -518,10 +522,10 @@ export default function AdminCampaignsPage() {
                 </button>
                 <button 
                   onClick={handleSave}
-                  disabled={!formData.title}
+                  disabled={!formData.title || isUploading}
                   className="flex-1 md:flex-none px-6 py-3 rounded-lg font-bold bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-900 transition-colors"
                 >
-                  Guardar Campaña
+                  {isUploading ? 'Subiendo...' : 'Guardar Campaña'}
                 </button>
               </div>
             </div>
