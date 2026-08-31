@@ -191,8 +191,10 @@ export default function CheckoutPage() {
   }
 
   // Calculate delivery fee
-  const DELIVERY_FEE = selectedZone?.delivery_fee ? Number(selectedZone.delivery_fee) : 0;
-  const total = Math.max(0, subtotal + DELIVERY_FEE - (appliedCoupon?.discount_amount || 0));
+  const DELIVERY_FEE = selectedZone?.delivery_fee ? Number(Number(selectedZone.delivery_fee).toFixed(2)) : 0;
+  const subtotalValue = Number(Number(subtotal).toFixed(2));
+  const discountValue = appliedCoupon ? Number(Number(appliedCoupon.discount_amount).toFixed(2)) : 0;
+  const total = Number(Math.max(0, subtotalValue + DELIVERY_FEE - discountValue).toFixed(2));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,7 +212,7 @@ export default function CheckoutPage() {
         ...formData,
         user_id: userId,
         items,
-        subtotal,
+        subtotal: subtotalValue,
         coupon_code: appliedCoupon?.code,
         delivery_fee: DELIVERY_FEE,
         total,
