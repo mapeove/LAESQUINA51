@@ -139,16 +139,24 @@ export async function POST(request: Request) {
     if (orderError) throw orderError;
 
     // Insert order items (snapshot)
-    const orderItems = items.map((item: CartItem) => ({
-      order_id: orderData.id,
-      product_id: item.product_id,
-      product_name_snapshot: item.product_name,
-      product_price_snapshot: item.product_price,
-      quantity: item.quantity,
-      options_snapshot: item.selected_options ?? [],
-      extras_snapshot: item.selected_extras ?? [],
-      item_total: item.line_total,
-    }));
+    const orderItems = items.map((item: CartItem) => {
+      const snapshotOptions = [...(item.selected_options || [])];
+      if (item.note) {
+        // Store the note in the flexible JSONB options_snapshot
+        (snapshotOptions as unknown as Record<string, unknown>[]).push({ is_note: true, option_name: item.note });
+      }
+      
+      return {
+        order_id: orderData.id,
+        product_id: item.product_id,
+        product_name_snapshot: item.product_name,
+        product_price_snapshot: item.product_price,
+        quantity: item.quantity,
+        options_snapshot: snapshotOptions,
+        extras_snapshot: item.selected_extras ?? [],
+        item_total: item.line_total,
+      };
+    });
 
     const { error: itemsError } = await adminSupabase
       .from('order_items')

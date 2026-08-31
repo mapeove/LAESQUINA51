@@ -250,6 +250,14 @@ export default function OrderHistoryClient({ pastOrders }: { pastOrders: Order[]
                           <p className="font-bold text-sm text-[#3A2418] leading-tight">{item.product_name || (item as unknown as Record<string, unknown>).product_name_snapshot as string}</p>
                           {(((item as unknown as Record<string, unknown>).options || (item as unknown as Record<string, unknown>).options_snapshot) as Record<string, unknown>[] || []).map((opt: unknown, oidx: number) => {
                             const optRecord = opt as Record<string, unknown>;
+                            if (optRecord.is_note) {
+                              return (
+                                <div key={oidx} className="mt-2 p-2 rounded-md bg-[#FFF7E5] border border-[#E8D5A8]">
+                                  <p className="text-[10px] font-bold text-[#A94F2F] uppercase mb-0.5">📝 Nota del cliente</p>
+                                  <p className="text-xs text-[#3A2418] italic">&quot;{optRecord.option_name as string}&quot;</p>
+                                </div>
+                              );
+                            }
                             return <p key={oidx} className="text-[10px] text-[#65513F] leading-tight mt-1">• {(optRecord.name || optRecord.option_name) as string}</p>;
                           })}
                           {/* Extras */}

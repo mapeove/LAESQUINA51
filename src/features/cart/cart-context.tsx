@@ -8,6 +8,7 @@ interface CartContextType {
   addItem: (item: Omit<CartItem, 'cart_item_id'>) => void;
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
+  updateNote: (cartItemId: string, note: string) => void;
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
@@ -46,7 +47,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const sameExtras =
           JSON.stringify(item.selected_extras ?? []) ===
           JSON.stringify(newItem.selected_extras ?? []);
-        return sameOptions && sameExtras;
+        const sameNote = item.note === newItem.note;
+        return sameOptions && sameExtras && sameNote;
       });
 
       if (existingIndex > -1) {
@@ -103,11 +105,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const clearCart = () => setItems([]);
+  const updateNote = (cartItemId: string, note: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.cart_item_id === cartItemId ? { ...item, note } : item
+      )
+    );
+  };
 
-  const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
+  const clearCart = () => {
+    setItems([]);
+  };
 
-  const subtotal = items.reduce((acc, item) => acc + item.line_total, 0);
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.line_total, 0);
 
   return (
     <CartContext.Provider
@@ -116,6 +127,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addItem,
         removeItem,
         updateQuantity,
+        updateNote,
         clearCart,
         totalItems,
         subtotal,

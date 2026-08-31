@@ -174,6 +174,7 @@ export interface CartItem {
   selected_options: CartItemOption[]
   selected_extras: CartItemExtra[]
   line_total: number
+  note?: string
 }
 
 // ---- Orders ------------------------------------------------

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, subtotal } = useCart();
+  const { items, removeItem, updateQuantity, updateNote, subtotal } = useCart();
 
   if (items.length === 0) {
     return (
@@ -146,6 +146,27 @@ export default function CartPage() {
                   >
                     {formatPrice(item.line_total)}
                   </span>
+                </div>
+
+                {/* Customer Note */}
+                <div className="mt-3 pt-3 border-t" style={{ borderColor: '#E8D5A8' }}>
+                  <label htmlFor={`note-${item.cart_item_id}`} className="block text-xs font-bold mb-1" style={{ color: '#A94F2F' }}>
+                    📝 Nota para este producto
+                  </label>
+                  <input
+                    id={`note-${item.cart_item_id}`}
+                    type="text"
+                    value={item.note || ''}
+                    onChange={(e) => updateNote(item.cart_item_id, e.target.value)}
+                    placeholder="Ej. Sin pepinillos, extra tostado..."
+                    className="w-full text-xs p-2 rounded-lg border focus:outline-none focus:ring-1 transition-all"
+                    style={{ 
+                      backgroundColor: '#F3E8CC', 
+                      borderColor: '#D4C4A0', 
+                      color: '#3A2418',
+                      '--tw-ring-color': '#B88727'
+                    } as React.CSSProperties}
+                  />
                 </div>
               </div>
             </div>

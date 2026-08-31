@@ -533,36 +533,76 @@ function AdminOrdersContent() {
                 {/* Items summary */}
                 <div className="bg-white p-5 rounded-2xl border border-[#E8D5A8] shadow-sm h-full flex flex-col">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#A94F2F] mb-4">Productos del pedido</h3>
-                  <div className="space-y-3 mb-4 flex-1">
-                    {selectedOrder.items?.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-[#F3E8CC] text-[#3A2418]">
-                        {/* Product photo from joined products table */}
-                        {(() => {
-                          const joinedProduct = (item as unknown as Record<string, unknown>).product as Record<string, unknown> | null | undefined;
-                          const imgSrc = joinedProduct?.image_url || joinedProduct?.image || null;
-                          return imgSrc ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={String(imgSrc)}
-                              alt={item.product_name}
-                              className="w-14 h-14 rounded-lg object-cover shrink-0 border border-[#D5C29A]"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 rounded-lg bg-[#E8D5A8] shrink-0 flex items-center justify-center text-[#B88727] text-xs font-bold border border-[#D5C29A]">
-                              🍔
+                  <div className="space-y-4 mb-4 flex-1">
+                      {selectedOrder.items?.map((item, idx) => (
+                        <div key={idx} className="flex flex-col gap-3 p-4 rounded-xl bg-[#F3E8CC] border border-[#D5C29A] text-[#3A2418]">
+                          <div className="flex gap-4">
+                            {/* Product photo */}
+                            {(() => {
+                              const joinedProduct = (item as unknown as Record<string, unknown>).product as Record<string, unknown> | null | undefined;
+                              const imgSrc = joinedProduct?.image_url || joinedProduct?.image || null;
+                              return imgSrc ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={String(imgSrc)}
+                                  alt={item.product_name || (item as unknown as Record<string, unknown>).product_name_snapshot as string}
+                                  className="w-16 h-16 rounded-xl object-cover shrink-0 border-2 border-[#D5C29A]"
+                                />
+                              ) : (
+                                <div className="w-16 h-16 rounded-xl bg-[#E8D5A8] shrink-0 flex items-center justify-center text-[#B88727] text-xl border-2 border-[#D5C29A]">🍔</div>
+                              );
+                            })()}
+                            
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-black text-lg text-[#3A2418] uppercase leading-tight mb-1">
+                                {item.product_name || (item as unknown as Record<string, unknown>).product_name_snapshot as string}
+                              </h4>
+                              <p className="text-sm font-mono text-[#65513F] mb-2 border-b border-[#D5C29A]/40 pb-2">
+                                <span className="font-bold text-[#A94F2F]">{item.quantity} ×</span> {formatPrice(item.product_price)}
+                              </p>
+
+                              {/* Options and Extras */}
+                              <div className="space-y-1">
+                                {(((item as unknown as Record<string, unknown>).options || (item as unknown as Record<string, unknown>).options_snapshot) as Record<string, unknown>[] || []).map((opt: unknown, oidx: number) => {
+                                  const optRecord = opt as Record<string, unknown>;
+                                  
+                                  // Render note distinctly
+                                  if (optRecord.is_note) {
+                                    return (
+                                      <div key={oidx} className="mt-2 p-3 rounded-lg bg-white border-2 border-[#A94F2F]/20">
+                                        <p className="text-xs font-bold text-[#A94F2F] uppercase mb-1">📝 PETICIÓN DEL CLIENTE</p>
+                                        <p className="text-sm font-medium text-[#3A2418]">&quot;{optRecord.option_name as string}&quot;</p>
+                                      </div>
+                                    );
+                                  }
+
+                                  // Normal option
+                                  return (
+                                    <p key={oidx} className="text-xs font-bold text-[#65513F] flex items-start gap-1.5">
+                                      <span className="text-[#A94F2F] mt-0.5">•</span> {(optRecord.name || optRecord.option_name) as string}
+                                    </p>
+                                  );
+                                })}
+
+                                {(((item as unknown as Record<string, unknown>).extras || (item as unknown as Record<string, unknown>).extras_snapshot) as Record<string, unknown>[] || []).map((ext: unknown, eidx: number) => {
+                                  const extRecord = ext as Record<string, unknown>;
+                                  return (
+                                    <p key={`ext-${eidx}`} className="text-xs font-bold text-[#A94F2F] flex items-start gap-1.5">
+                                      <span className="mt-0.5">+</span> {(extRecord.name || extRecord.extra_name) as string}
+                                    </p>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          );
-                        })()}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-[#3A2418] leading-tight truncate">{item.product_name}</p>
-                          <p className="text-xs font-mono text-[#65513F] mt-0.5">
-                            {formatPrice(item.product_price)} × {item.quantity}
-                          </p>
+                          </div>
+
+                          <div className="flex justify-end items-center border-t border-[#D5C29A]/60 pt-2 mt-1">
+                            <span className="text-xs text-[#65513F] uppercase font-bold mr-3">Subtotal</span>
+                            <span className="font-mono font-black text-lg text-[#A94F2F]">{formatPrice(item.line_total || (item as unknown as Record<string, unknown>).item_total as number)}</span>
+                          </div>
                         </div>
-                        <span className="font-mono font-bold text-sm text-[#A94F2F] shrink-0">{formatPrice(item.line_total)}</span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
 
                   <div className="border-t border-[#D5C29A]/60 pt-3 space-y-1.5 text-sm">
                     <div className="flex justify-between text-[#65513F]">
