@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     if (!cleanCode) {
       return NextResponse.json({ 
         valid: false, 
+        message: 'Por favor, introduce un código de cupón.',
         error: 'Por favor, introduce un código de cupón.' 
       }, { 
         status: 400,
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
       console.error('Error querying coupon:', error);
       return NextResponse.json({ 
         valid: false, 
+        message: 'Error al consultar el cupón.',
         error: 'Error al consultar el cupón.' 
       }, { 
         status: 500,
@@ -44,6 +46,7 @@ export async function POST(request: Request) {
     if (!data) {
       return NextResponse.json({ 
         valid: false, 
+        message: 'Cupón inválido, expirado o ya utilizado.',
         error: 'Cupón inválido, expirado o ya utilizado.' 
       }, { 
         status: 200,
@@ -63,6 +66,7 @@ export async function POST(request: Request) {
     console.error('Coupon validation error:', err);
     return NextResponse.json({ 
       valid: false, 
+      message: 'Error al validar el cupón.',
       error: 'Error al validar el cupón.' 
     }, { 
       status: 500,

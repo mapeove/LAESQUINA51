@@ -33,7 +33,7 @@ export default function LogoutButton() {
       style={{ color: '#A94F2F', fontFamily: 'Oswald, sans-serif' }}
     >
       <LogOut className="w-4 h-4" />
-      {isLoggingOut ? 'Saliendo...' : 'Salir'}
+      {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
     </button>
   );
 }
