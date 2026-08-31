@@ -4,6 +4,7 @@ import { LogOut } from 'lucide-react';
 import OrderTrackerClient from './OrderTrackerClient';
 import ProfileSectionClient from './ProfileSectionClient';
 import OrderHistoryClient from './OrderHistoryClient';
+import type { Order } from '@/types';
 
 export default async function MiCuentaPage() {
   const supabase = await createClient();
@@ -39,7 +40,7 @@ export default async function MiCuentaPage() {
       ...item,
       product: productsMap.get(item.product_id as string) || null
     }))
-  }));
+  })) as unknown as Order[];
 
   const activeOrders = orders?.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status)) || [];
   const pastOrders = orders?.filter(o => ['DELIVERED', 'CANCELLED'].includes(o.status)) || [];

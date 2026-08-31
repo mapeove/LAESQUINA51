@@ -65,11 +65,11 @@ function AdminOrdersContent() {
           const productsMap = new Map((productsRes.data || []).map(p => [p.id, p]));
           const typedOrders = (ordersRes.data as Order[]).map(order => ({
             ...order,
-            items: order.items?.map((item: Record<string, unknown>) => ({
+            items: order.items?.map(item => ({
               ...item,
-              product: productsMap.get(item.product_id as string) || null
+              product: productsMap.get((item as unknown as Record<string, string>).product_id) || null
             }))
-          }));
+          })) as unknown as Order[];
           setOrders(typedOrders);
 
           const idParam = searchParams.get('id');

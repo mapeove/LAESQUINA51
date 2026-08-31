@@ -234,11 +234,11 @@ export default function OrderHistoryClient({ pastOrders }: { pastOrders: Order[]
                   return (
                   <div key={idx} className="p-3 rounded-xl bg-neutral-50 border border-neutral-100 flex items-center gap-3">
                     {(() => {
-                      const joinedProduct = (item as Record<string, unknown>).product as Record<string, unknown> | null;
-                      const imgSrc = joinedProduct?.image_url || joinedProduct?.image || null;
+                      const joinedProduct = (item as unknown as Record<string, unknown>).product as Record<string, unknown> | null;
+                      const imgSrc = (joinedProduct?.image_url || joinedProduct?.image || null) as string | null;
                       return imgSrc ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={imgSrc} alt={item.product_name || item.product_name_snapshot} className="w-12 h-12 rounded object-cover border border-neutral-200" />
+                        <img src={imgSrc} alt={item.product_name || (item as unknown as Record<string, unknown>).product_name_snapshot as string} className="w-12 h-12 rounded object-cover border border-neutral-200" />
                       ) : (
                         <div className="w-12 h-12 rounded bg-neutral-200 flex items-center justify-center text-xl border border-neutral-300">🍔</div>
                       );
@@ -247,16 +247,19 @@ export default function OrderHistoryClient({ pastOrders }: { pastOrders: Order[]
                       <div className="flex gap-2">
                         <span className="font-black text-[#A94F2F]">{item.quantity}x</span>
                         <div>
-                          <p className="font-bold text-sm text-[#3A2418] leading-tight">{item.product_name_snapshot || item.product_name}</p>
-                          {(item.options_snapshot || []).map((opt, oidx: number) => (
-                            <p key={oidx} className="text-[10px] text-[#65513F] leading-tight mt-1">• {opt.name}</p>
-                          ))}
-                          {(item.extras_snapshot || []).map((ext, eidx: number) => (
-                            <p key={eidx} className="text-[10px] text-[#A94F2F] leading-tight mt-1">+ {ext.name}</p>
-                          ))}
+                          <p className="font-bold text-sm text-[#3A2418] leading-tight">{item.product_name || (item as unknown as Record<string, unknown>).product_name_snapshot as string}</p>
+                          {(((item as unknown as Record<string, unknown>).options || (item as unknown as Record<string, unknown>).options_snapshot) as Record<string, unknown>[] || []).map((opt: unknown, oidx: number) => {
+                            const optRecord = opt as Record<string, unknown>;
+                            return <p key={oidx} className="text-[10px] text-[#65513F] leading-tight mt-1">• {(optRecord.name || optRecord.option_name) as string}</p>;
+                          })}
+                          {/* Extras */}
+                          {(((item as unknown as Record<string, unknown>).extras || (item as unknown as Record<string, unknown>).extras_snapshot) as Record<string, unknown>[] || []).map((ext: unknown, eidx: number) => {
+                            const extRecord = ext as Record<string, unknown>;
+                            return <p key={eidx} className="text-[10px] text-[#A94F2F] leading-tight mt-1">+ {(extRecord.name || extRecord.extra_name) as string}</p>;
+                          })}
                         </div>
                       </div>
-                      <span className="font-mono font-bold text-sm text-[#3A2418]">€{Number(item.item_total || item.line_total).toFixed(2)}</span>
+                      <span className="font-mono font-bold text-sm text-[#3A2418]">€{Number(item.line_total || (item as unknown as Record<string, unknown>).item_total).toFixed(2)}</span>
                     </div>
                   </div>
                 )})}
