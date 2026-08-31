@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { LogOut } from 'lucide-react';
 import OrderTrackerClient from './OrderTrackerClient';
 import ProfileSectionClient from './ProfileSectionClient';
 import OrderHistoryClient from './OrderHistoryClient';
+import LogoutButton from './LogoutButton';
 import type { Order } from '@/types';
 
 export default async function MiCuentaPage() {
@@ -51,11 +51,7 @@ export default async function MiCuentaPage() {
         <h1 className="text-4xl font-bold tracking-wide uppercase" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
           MI CUENTA
         </h1>
-        <form action="/api/auth/logout" method="POST">
-          <button type="submit" className="text-xs font-bold uppercase underline flex items-center gap-1" style={{ color: '#A94F2F', fontFamily: 'Oswald, sans-serif' }}>
-            <LogOut className="w-4 h-4" /> Salir
-          </button>
-        </form>
+        <LogoutButton />
       </div>
 
       <div className="grid gap-6">
@@ -63,16 +59,9 @@ export default async function MiCuentaPage() {
         <ProfileSectionClient profile={profile} email={user.email || ''} />
 
         {/* Active Orders Tracker */}
-        {activeOrders.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="font-bold text-2xl uppercase" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
-              Pedido en curso
-            </h2>
-            {activeOrders.map(order => (
-              <OrderTrackerClient key={order.id} order={order} />
-            ))}
-          </div>
-        )}
+        {activeOrders.map(order => (
+          <OrderTrackerClient key={order.id} order={order} />
+        ))}
 
         {/* Order History */}
         <OrderHistoryClient pastOrders={pastOrders} />
