@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { X, MessageCircle, ChevronRight, Truck, Wallet, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -25,10 +25,8 @@ function AdminOrdersContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('PENDING');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const supabase = createClient();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {

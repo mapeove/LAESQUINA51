@@ -14,36 +14,69 @@ interface NewOrderNotification {
 }
 
 export function AdminOrderNotifier() {
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('admin_order_sound_enabled');
+      return saved === null ? true : saved === 'true';
+    }
+    return true;
+  });
   const [notifications, setNotifications] = useState<NewOrderNotification[]>([]);
   const processedIds = useRef<Set<string>>(new Set());
   const supabase = createClient();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const soundEnabledRef = useRef<boolean>(soundEnabled);
 
-  // Initialize from localStorage and audio object
+  // Sync ref with state
   useEffect(() => {
-    const savedPref = localStorage.getItem('admin_order_sound_enabled');
-    if (savedPref === 'true') {
-      setTimeout(() => {
-        setSoundEnabled(true);
-        setHasInteracted(true); // Assume prior interaction
-      }, 0);
-    }
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
+  // Initialize audio and unlock listener
+  useEffect(() => {
     audioRef.current = new Audio('/sounds/administrador.mp3');
+
+    // Unlock audio context on any user interaction in the admin panel
+    const unlockAudio = () => {
+      if (audioRef.current) {
+        audioRef.current.load();
+      }
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
+
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+    window.addEventListener('keydown', unlockAudio);
+
+    return () => {
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
   }, []);
 
   const playSound = useCallback(() => {
-    if (!soundEnabled || !hasInteracted || !audioRef.current) return;
-    
-    // reset if already playing
-    audioRef.current.currentTime = 0;
-    const playPromise = audioRef.current.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(e => console.warn('Autoplay blocked:', e));
-    }
-  }, [soundEnabled, hasInteracted]);
+    if (!soundEnabledRef.current) return;
 
+    try {
+      if (!audioRef.current) {
+        audioRef.current = new Audio('/sounds/administrador.mp3');
+      }
+      audioRef.current.currentTime = 0;
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((e) => {
+          console.warn('Autoplay blocked by browser policy (interact with page to enable audio):', e);
+        });
+      }
+    } catch (err) {
+      console.warn('Audio playback error:', err);
+    }
+  }, []);
+
+  // Stable Supabase Realtime channel subscription (does not reconnect on sound toggle)
   useEffect(() => {
     const channel = supabase
       .channel('admin-new-orders')
@@ -53,25 +86,25 @@ export function AdminOrderNotifier() {
         (payload) => {
           const newOrder = payload.new;
           if (processedIds.current.has(newOrder.id)) return;
-          
+
           processedIds.current.add(newOrder.id);
-          
+
           playSound();
-          
+
           window.dispatchEvent(new CustomEvent('new-admin-order', { detail: newOrder }));
-          
+
           const notif = {
             id: newOrder.id,
             orderNumber: newOrder.order_number,
             customerName: newOrder.customer_name,
             total: newOrder.total,
           };
-          
-          setNotifications(prev => [...prev, notif]);
-          
+
+          setNotifications((prev) => [...prev, notif]);
+
           // Auto dismiss after 5s
           setTimeout(() => {
-            setNotifications(prev => prev.filter(n => n.id !== newOrder.id));
+            setNotifications((prev) => prev.filter((n) => n.id !== newOrder.id));
           }, 5000);
         }
       )
@@ -85,8 +118,14 @@ export function AdminOrderNotifier() {
   const toggleSound = () => {
     const newVal = !soundEnabled;
     setSoundEnabled(newVal);
-    setHasInteracted(true);
+    soundEnabledRef.current = newVal;
     localStorage.setItem('admin_order_sound_enabled', String(newVal));
+
+    if (newVal && audioRef.current) {
+      // Play a short preview / test sound when enabling
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
   };
 
   const removeNotification = (id: string) => {

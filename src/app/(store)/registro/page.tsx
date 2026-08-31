@@ -50,6 +50,17 @@ export default function RegisterPage() {
       if (profileError) {
         console.error('Error creating profile', profileError);
       }
+
+      // Disparar correo de bienvenida por SMTP
+      try {
+        await fetch('/api/auth/welcome-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, fullName }),
+        });
+      } catch (err) {
+        console.warn('Error al disparar email de bienvenida:', err);
+      }
     }
 
     // Auto-login (Supabase does this automatically in some configs, but we can just redirect)
