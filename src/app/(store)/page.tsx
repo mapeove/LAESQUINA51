@@ -124,78 +124,87 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* B. SECCIÓN BOX MINI-MONSTER CON FOTOGRAFÍA REAL GRANDE */}
-      <section className="px-4 py-6 max-w-6xl mx-auto">
-        <div className="p-6 md:p-10 rounded-3xl relative overflow-hidden shadow-md" style={{ backgroundColor: '#FFF7E5', border: '2px solid #E8D5A8' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            {/* Image side */}
-            <div className="relative h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid #D4C4A0' }}>
-              <Image
-                src="/images/products/box-mini-monster.png"
-                alt="El Box Mini-Monster La Esquina 51"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 500px"
-              />
+      {/* LO MÁS PEDIDO EN LA 51 (Categoría dinámica) */}
+      {(() => {
+        const loMasPedidoProducts = products.filter(p => p.category?.slug === 'lo-mas-pedido');
+        if (loMasPedidoProducts.length === 0) return null;
+
+        const hero = loMasPedidoProducts[0];
+        const heroImg = hero.image_url || hero.image || '/images/products/box-mini-monster.png';
+        const restProducts = loMasPedidoProducts.slice(1);
+
+        return (
+          <section className="px-4 py-8 max-w-6xl mx-auto space-y-6">
+            <div className="flex justify-between items-end border-b pb-4" style={{ borderColor: '#E8D5A8' }}>
+              <div>
+                <span className="text-xs font-mono font-bold uppercase tracking-widest block" style={{ color: '#A94F2F' }}>SELECCIÓN ESTRELLA</span>
+                <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
+                  LO MÁS PEDIDO EN LA 51
+                </h2>
+              </div>
+              <Link href="/menu" className="text-xs font-bold hover:underline font-mono" style={{ color: '#B88727' }}>
+                VER TODO →
+              </Link>
             </div>
 
-            {/* Content side */}
-            <div className="space-y-4">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold font-mono uppercase" style={{ backgroundColor: 'rgba(169,79,47,0.15)', color: '#A94F2F' }}>
-                <Flame size={14} /> LO MÁS VIRAL DE SEVILLA
-              </div>
-              <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
-                EL BOX MINI-MONSTER
-              </h2>
-              <p className="text-xs md:text-sm" style={{ color: '#65513F' }}>
-                5 mini burguer de ternera premium + ración gigante de patatas fritas crujientes + salsas artesanales de la casa + Coca-Cola bien fría.
-              </p>
-              <div className="pt-2 flex items-baseline space-x-3">
-                <span className="text-3xl md:text-4xl font-bold font-mono" style={{ color: '#A94F2F' }}>{formatPrice(10.50)}</span>
-                <span className="text-xs uppercase font-mono tracking-wider" style={{ color: '#65513F' }}>Menú Completo</span>
-              </div>
-              <div className="pt-2 flex flex-wrap gap-3">
-                <Link
-                  href="/menu"
-                  className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-transform active:scale-95 shadow-md"
-                  style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
-                >
-                  <ShoppingBag size={16} />
-                  <span>PEDIR AHORA</span>
-                </Link>
-                <Link
-                  href="/menu"
-                  className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-all"
-                  style={{ backgroundColor: '#F3E8CC', color: '#3A2418', border: '1px solid #D4C4A0', fontFamily: 'Oswald, sans-serif' }}
-                >
-                  <span>VER MENÚ</span>
-                </Link>
+            {/* Publicidad Principal (Primer producto de la categoría) */}
+            <div className="p-6 md:p-10 rounded-3xl relative overflow-hidden shadow-md" style={{ backgroundColor: '#FFF7E5', border: '2px solid #E8D5A8' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="relative h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid #D4C4A0' }}>
+                  <Image
+                    src={heroImg}
+                    alt={hero.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 500px"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold font-mono uppercase" style={{ backgroundColor: 'rgba(169,79,47,0.15)', color: '#A94F2F' }}>
+                    <Flame size={14} /> LO MÁS VIRAL DE SEVILLA
+                  </div>
+                  <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
+                    {hero.name}
+                  </h2>
+                  <p className="text-xs md:text-sm" style={{ color: '#65513F' }}>
+                    {hero.description}
+                  </p>
+                  <div className="pt-2 flex items-baseline space-x-3">
+                    <span className="text-3xl md:text-4xl font-bold font-mono" style={{ color: '#A94F2F' }}>{formatPrice(hero.price)}</span>
+                    <span className="text-xs uppercase font-mono tracking-wider" style={{ color: '#65513F' }}>Menú Completo</span>
+                  </div>
+                  <div className="pt-2 flex flex-wrap gap-3">
+                    <Link
+                      href="/menu"
+                      className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-transform active:scale-95 shadow-md"
+                      style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
+                    >
+                      <ShoppingBag size={16} />
+                      <span>PEDIR AHORA</span>
+                    </Link>
+                    <Link
+                      href="/menu"
+                      className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-all"
+                      style={{ backgroundColor: '#F3E8CC', color: '#3A2418', border: '1px solid #D4C4A0', fontFamily: 'Oswald, sans-serif' }}
+                    >
+                      <span>VER MENÚ</span>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* C. LO MÁS PEDIDO EN LA 51 */}
-      <section className="px-4 py-8 max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-between items-end border-b pb-4" style={{ borderColor: '#E8D5A8' }}>
-          <div>
-            <span className="text-xs font-mono font-bold uppercase tracking-widest block" style={{ color: '#A94F2F' }}>SELECCIÓN ESTRELLA</span>
-            <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418' }}>
-              LO MÁS PEDIDO EN LA 51
-            </h2>
-          </div>
-          <Link href="/menu" className="text-xs font-bold hover:underline font-mono" style={{ color: '#B88727' }}>
-            VER TODO →
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((prod) => (
-            <InteractiveProductCard key={prod.id} product={prod} variant="featured" />
-          ))}
-        </div>
-      </section>
+            {/* Resto de productos de la categoría */}
+            {restProducts.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
+                {restProducts.map((prod) => (
+                  <InteractiveProductCard key={prod.id} product={prod} variant="featured" />
+                ))}
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       {/* D. CATEGORÍAS */}
       <section className="px-4 py-8 max-w-6xl mx-auto space-y-6">
