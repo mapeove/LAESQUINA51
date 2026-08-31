@@ -88,11 +88,12 @@ export async function POST(request: Request) {
        return NextResponse.json({ error: 'Zona de reparto no válida' }, { status: 400 });
     }
 
-    const secureDeliveryFee = Number(zoneData.delivery_fee) || 0;
-    const secureSubtotal = Number(subtotal) || 0;
+    const secureDeliveryFee = Number(Number(zoneData.delivery_fee).toFixed(2)) || 0;
+    const secureSubtotal = Number(Number(subtotal).toFixed(2)) || 0;
 
     let discountAmount = 0;
     let cleanCouponCode: string | null = null;
+    let couponRecordId: string | null = null;
 
     if (coupon_code) {
       cleanCouponCode = typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null;
@@ -108,7 +109,8 @@ export async function POST(request: Request) {
         if (couponError || !couponData) {
           return NextResponse.json({ error: 'Cupón inválido, expirado o ya utilizado' }, { status: 400 });
         }
-        discountAmount = Number(couponData.discount_amount) || 0;
+        discountAmount = Number(Number(couponData.discount_amount).toFixed(2)) || 0;
+        couponRecordId = couponData.id;
       }
     }
 
@@ -140,100 +142,70 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join(', ');
 
-    if (cleanCouponCode) {
-      // Use RPC for atomic transaction when a coupon is provided
-      const rpcItems = items.map((item) => {
-        const snapshotOptions = [...(item.selected_options || [])];
-        if (item.note) {
-          snapshotOptions.push({ is_note: true, option_name: item.note } as any);
-        }
-        return {
-          product_id: item.product_id,
-          product_name_snapshot: item.product_name,
-          product_price_snapshot: item.product_price,
-          quantity: item.quantity,
-          item_total: item.line_total,
-          extras_snapshot: item.selected_extras ?? [],
-          options_snapshot: snapshotOptions,
-        };
-      });
+    // Standard order insertion without non-existent columns
+    const { data: orderData, error: orderError } = await adminSupabase
+      .from('orders')
+      .insert({
+        order_number: orderNumber,
+        status: 'PENDING',
+        customer_name,
+        customer_phone: cleanPhone,
+        customer_email: customer_email ?? null,
+        user_id: body.user_id ?? null,
+        delivery_address: fullAddress,
+        delivery_floor: delivery_floor ?? null,
+        delivery_door: delivery_door ?? null,
+        delivery_zone_id: zone_id,
+        delivery_zone_name: zoneData.name,
+        subtotal: secureSubtotal,
+        delivery_fee: secureDeliveryFee,
+        total: expectedTotal,
+        notes: notes ?? null,
+        payment_method: payment_method || 'CASH',
+        cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,
+        coupon_id: couponRecordId,
+        discount_amount: discountAmount,
+      })
+      .select()
+      .single();
 
-      const { data: orderId, error: rpcError } = await adminSupabase.rpc('create_order_with_coupon', {
-        p_user_id: body.user_id ?? null,
-        p_order_number: orderNumber,
-        p_total: expectedTotal,
-        p_subtotal: secureSubtotal,
-        p_delivery_fee: secureDeliveryFee,
-        p_status: 'PENDING',
-        p_payment_method: payment_method || 'CASH',
-        p_payment_status: 'PENDING',
-        p_customer_name: customer_name,
-        p_customer_phone: cleanPhone,
-        p_customer_email: customer_email ?? null,
-        p_customer_address: fullAddress,
-        p_delivery_floor: delivery_floor ?? null,
-        p_delivery_door: delivery_door ?? null,
-        p_delivery_zone_id: zone_id,
-        p_delivery_zone_name: zoneData.name,
-        p_notes: notes ?? null,
-        p_cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,
-        p_items: rpcItems,
-        p_coupon_code: cleanCouponCode
-      });
+    if (orderError) throw orderError;
 
-      if (rpcError) throw new Error(rpcError.message || 'Error aplicando el cupón o creando el pedido');
-    } else {
-      // Standard order creation without coupon
-      const { data: orderData, error: orderError } = await adminSupabase
-        .from('orders')
-        .insert({
-          order_number: orderNumber,
-          status: 'PENDING',
-          customer_name,
-          customer_phone: cleanPhone,
-          customer_email: customer_email ?? null,
-          user_id: body.user_id ?? null,
-          delivery_address: fullAddress,
-          delivery_floor: delivery_floor ?? null,
-          delivery_door: delivery_door ?? null,
-          delivery_zone_id: zone_id,
-          delivery_zone_name: zoneData.name,
-          subtotal: secureSubtotal,
-          delivery_fee: secureDeliveryFee,
-          total: expectedTotal,
-          notes: notes ?? null,
-          payment_method: payment_method || 'CASH',
-          cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,
+    // If a coupon was applied, mark it as consumed
+    if (couponRecordId) {
+      await adminSupabase
+        .from('coupons')
+        .update({
+          used: true,
+          used_by: body.user_id ?? null,
+          used_at: new Date().toISOString()
         })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      const orderItems = items.map((item) => {
-        const snapshotOptions = [...(item.selected_options || [])];
-        if (item.note) {
-          snapshotOptions.push({ is_note: true, option_name: item.note } as any);
-        }
-        
-        return {
-          order_id: orderData.id,
-          product_id: item.product_id,
-          product_name_snapshot: item.product_name,
-          product_price_snapshot: item.product_price,
-          quantity: item.quantity,
-          options_snapshot: snapshotOptions,
-          extras_snapshot: item.selected_extras ?? [],
-          item_total: item.line_total,
-        };
-      });
-
-      const { error: itemsError } = await adminSupabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
+        .eq('id', couponRecordId);
     }
+
+    const orderItems = items.map((item) => {
+      const snapshotOptions = [...(item.selected_options || [])];
+      if (item.note) {
+        snapshotOptions.push({ is_note: true, option_name: item.note } as any);
+      }
+      
+      return {
+        order_id: orderData.id,
+        product_id: item.product_id,
+        product_name_snapshot: item.product_name,
+        product_price_snapshot: item.product_price,
+        quantity: item.quantity,
+        options_snapshot: snapshotOptions,
+        extras_snapshot: item.selected_extras ?? [],
+        item_total: item.line_total,
+      };
+    });
+
+    const { error: itemsError } = await adminSupabase
+      .from('order_items')
+      .insert(orderItems);
+
+    if (itemsError) throw itemsError;
 
     return NextResponse.json({ success: true, orderNumber });
   } catch (error: unknown) {
