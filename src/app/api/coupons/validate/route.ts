@@ -1,41 +1,54 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient, createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   try {
-    const { code } = await request.json();
-    if (!code) {
-      return NextResponse.json({ error: 'Falta código' }, { status: 400 });
-    }
+    const body = await request.json();
+    const rawCode = body?.code;
 
-    const authSupabase = await createClient();
-    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const cleanCode = typeof rawCode === 'string' ? rawCode.trim().toUpperCase() : '';
+    if (!cleanCode) {
+      return NextResponse.json({ 
+        valid: false, 
+        error: 'Por favor, introduce un código de cupón.' 
+      }, { status: 400 });
     }
 
     const adminSupabase = await createAdminClient();
 
     const { data, error } = await adminSupabase
       .from('coupons')
-      .select('code, discount_amount')
-      .eq('code', code.toUpperCase())
+      .select('id, code, discount_amount, used, expires_at')
+      .eq('code', cleanCode)
       .eq('used', false)
       .gt('expires_at', new Date().toISOString())
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
-      return NextResponse.json({ error: 'Cupón inválido, expirado o ya utilizado.' }, { status: 404 });
+    if (error) {
+      console.error('Error querying coupon:', error);
+      return NextResponse.json({ 
+        valid: false, 
+        error: 'Error al consultar el cupón.' 
+      }, { status: 500 });
+    }
+
+    if (!data) {
+      return NextResponse.json({ 
+        valid: false, 
+        error: 'Cupón inválido, expirado o ya utilizado.' 
+      }, { status: 400 });
     }
 
     return NextResponse.json({ 
       valid: true, 
       code: data.code, 
-      discount_amount: data.discount_amount 
+      discount_amount: Number(data.discount_amount) 
     });
-  } catch (error: any) {
-    console.error('Coupon validation error:', error);
-    return NextResponse.json({ error: 'Error al validar el cupón.' }, { status: 500 });
+  } catch (err: unknown) {
+    console.error('Coupon validation error:', err);
+    return NextResponse.json({ 
+      valid: false, 
+      error: 'Error al validar el cupón.' 
+    }, { status: 500 });
   }
 }

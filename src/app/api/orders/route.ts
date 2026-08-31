@@ -151,7 +151,7 @@ export async function POST(request: Request) {
         p_notes: notes ?? null,
         p_cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,
         p_items: rpcItems,
-        p_coupon_code: coupon_code
+        p_coupon_code: typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null
       });
 
       if (rpcError) throw new Error(rpcError.message || 'Error aplicando el cupón o creando el pedido');
