@@ -24,6 +24,7 @@ export default function AdminCuponesPage() {
   const [discountAmount, setDiscountAmount] = useState(5);
   const [daysValid, setDaysValid] = useState(15);
   const [mode, setMode] = useState<'distribute' | 'generate'>('distribute');
+  const [isProcessing, setIsProcessing] = useState(false);
   // Helper to copy coupon code to clipboard with feedback
   const copyToClipboard = async (text: string) => {
     try {
@@ -88,6 +89,40 @@ export default function AdminCuponesPage() {
     }
   };
 
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setMessage({ text: '', type: '' });
+    try {
+      const res = await fetch('/api/admin/generate-coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          count,
+          discount_amount: discountAmount,
+          days_valid: daysValid
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al generar cupones');
+      }
+      setMessage({
+        text: `¡Éxito! Se generaron ${data.coupons?.length || count} cupones.`,
+        type: 'success'
+      });
+      fetchCoupons();
+      // reset form values to defaults
+      setCount(10);
+      setDiscountAmount(5);
+      setDaysValid(15);
+    } catch (err: any) {
+      setMessage({ text: err.message, type: 'error' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -103,135 +138,84 @@ export default function AdminCuponesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Mode Selector */}
-        <div className="mb-4 flex space-x-4">
-          <button type="button" onClick={() => setMode('generate')} className={`px-3 py-1 rounded ${mode === 'generate' ? 'bg-[#A94F2F] text-white' : 'bg-gray-200'}`}>Solo Generar</button>
-          <button type="button" onClick={() => setMode('distribute')} className={`px-3 py-1 rounded ${mode === 'distribute' ? 'bg-[#A94F2F] text-white' : 'bg-gray-200'}`}>Generar y Enviar</button>
-        </div>
+        
+          {/* Forms */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Dropdown selector */}
+            <div className="mb-4">
+              <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Modo</label>
+              <select value={mode} onChange={e => setMode(e.target.value as typeof mode)} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none">
+                <option value="generate">Generar para compartir (WhatsApp / Amigos / Familia)</option>
+                <option value="distribute">Generar y enviar por correo masivo</option>
+              </select>
+            </div>
 
-        {/* Forms */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-white border rounded-2xl p-5 shadow-sm" style={{ borderColor: '#E8D5A8' }}>
-            {mode === 'generate' ? (
-              <>
-                <h2 className="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
-                  <Gift size={20} className="text-[#A94F2F]" />
-                  Sólo Generar Cupones
-                </h2>
-                <p className="text-xs text-gray-500 mb-4">Genera códigos de descuento sin enviarlos por email.</p>
-                <form onSubmit={handleGenerate} className="space-y-4">
-                  {/* inputs reuse same state */}
-                  <div>
-                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Cantidad</label>
-                    <input type="number" min="1" max="1000" value={count} onChange={e => setCount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Valor del Descuento (€)</label>
-                    <input type="number" min="1" step="0.5" value={discountAmount} onChange={e => setDiscountAmount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Días de Validez</label>
-                    <input type="number" min="1" max="365" value={daysValid} onChange={e => setDaysValid(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
-                  </div>
-                  {message.text && (
-                    <div className={`p-3 rounded-lg flex items-start gap-2 text-xs font-medium ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-                      {message.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
-                      <span>{message.text}</span>
+            <div className="bg-white border rounded-2xl p-5 shadow-sm" style={{ borderColor: '#E8D5A8' }}>
+              {mode === 'generate' ? (
+                <>
+                  <h2 className="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
+                    <Gift size={20} className="text-[#A94F2F]" />
+                    Generar para compartir
+                  </h2>
+                  <p className="text-xs text-gray-500 mb-4">Genera códigos de descuento sin enviarlos por email.</p>
+                  <form onSubmit={handleGenerate} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Cantidad</label>
+                      <input type="number" min="1" max="1000" value={count} onChange={e => setCount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
                     </div>
-                  )}
-                  <button type="submit" disabled={isProcessing} className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white" style={{ backgroundColor: '#A94F2F' }}>
-                    {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar</>}
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <h2 className="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
-                  <Gift size={20} className="text-[#A94F2F]" />
-                  Generar & Enviar Masivo
-                </h2>
-                <p className="text-xs text-gray-500 mb-4">Se seleccionarán aleatoriamente N clientes que <strong>no hayan recibido</strong> un cupón en los últimos 3 meses y se les enviará por correo.</p>
-                <form onSubmit={handleDistribute} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Cantidad de Clientes</label>
-                    <input type="number" min="1" max="1000" value={count} onChange={e => setCount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Valor del Descuento (€)</label>
-                    <input type="number" min="1" step="0.5" value={discountAmount} onChange={e => setDiscountAmount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Días de Validez</label>
-                    <input type="number" min="1" max="365" value={daysValid} onChange={e => setDaysValid(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
-                  </div>
-                  {message.text && (
-                    <div className={`p-3 rounded-lg flex items-start gap-2 text-xs font-medium ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-                      {message.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
-                      <span>{message.text}</span>
+                    <div>
+                      <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Valor del Descuento (€)</label>
+                      <input type="number" min="1" step="0.5" value={discountAmount} onChange={e => setDiscountAmount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
                     </div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={isProcessing}
-                    className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white"
-                    style={{ backgroundColor: '#A94F2F' }}
-                  >
-                    {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar y Enviar</>}
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-                <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Cantidad de Clientes</label>
-                <input 
-                  type="number" 
-                  min="1" max="1000"
-                  value={count} onChange={e => setCount(Number(e.target.value))}
-                  className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" 
-                  required 
-                />
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Valor del Descuento (€)</label>
-                <input 
-                  type="number" 
-                  min="1" step="0.5"
-                  value={discountAmount} onChange={e => setDiscountAmount(Number(e.target.value))}
-                  className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" 
-                  required 
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Días de Validez</label>
-                <input 
-                  type="number" 
-                  min="1" max="365"
-                  value={daysValid} onChange={e => setDaysValid(Number(e.target.value))}
-                  className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" 
-                  required 
-                />
-              </div>
-
-              {message.text && (
-                <div className={`p-3 rounded-lg flex items-start gap-2 text-xs font-medium ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-                  {message.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
-                  <span>{message.text}</span>
-                </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Días de Validez</label>
+                      <input type="number" min="1" max="365" value={daysValid} onChange={e => setDaysValid(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                    </div>
+                    {message.text && (
+                      <div className={`p-3 rounded-lg flex items-start gap-2 text-xs font-medium ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                        {message.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                        <span>{message.text}</span>
+                      </div>
+                    )}
+                    <button type="submit" disabled={isProcessing} className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white" style={{ backgroundColor: '#A94F2F' }}>
+                      {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar Cupones</>}
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
+                    <Gift size={20} className="text-[#A94F2F]" />
+                    Generar y Enviar Masivo
+                  </h2>
+                  <p className="text-xs text-gray-500 mb-4">Se seleccionarán aleatoriamente N clientes que <strong>no hayan recibido</strong> un cupón en los últimos 3 meses y se les enviará por correo.</p>
+                  <form onSubmit={handleDistribute} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Cantidad de Clientes</label>
+                      <input type="number" min="1" max="1000" value={count} onChange={e => setCount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Valor del Descuento (€)</label>
+                      <input type="number" min="1" step="0.5" value={discountAmount} onChange={e => setDiscountAmount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Días de Validez</label>
+                      <input type="number" min="1" max="365" value={daysValid} onChange={e => setDaysValid(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                    </div>
+                    {message.text && (
+                      <div className={`p-3 rounded-lg flex items-start gap-2 text-xs font-medium ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                        {message.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                        <span>{message.text}</span>
+                      </div>
+                    )}
+                    <button type="submit" disabled={isProcessing} className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white" style={{ backgroundColor: '#A94F2F' }}>
+                      {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar y Enviar</>}
+                    </button>
+                  </form>
+                </>
               )}
-
-              <button
-  type="submit"
-  disabled={isProcessing}
-  className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white"
-  style={{ backgroundColor: '#A94F2F' }}
->
-  {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar y Enviar</>}
-</button>
-            </form>
+            </div>
           </div>
-        </div>
 
         {/* Coupons List */}
         <div className="lg:col-span-2">
