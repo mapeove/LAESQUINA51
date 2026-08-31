@@ -517,18 +517,9 @@ export default function CheckoutPage() {
               {couponError && <p className="text-xs font-medium text-red-600 font-mono mt-1">{couponError}</p>}
             </div>
           ) : (
-            <div className="p-4 rounded-xl flex items-center justify-between" style={{ backgroundColor: '#E3F2E1', border: '1px dashed #4CAF50' }}>
-              <div>
-                <p className="text-sm font-bold text-green-800">¡Cupón Aplicado!</p>
-                <p className="text-xs font-mono text-green-700">{appliedCoupon.code} (-{formatPrice(appliedCoupon.discount_amount)})</p>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setAppliedCoupon(null)}
-                className="text-xs font-bold text-red-600 uppercase hover:underline"
-              >
-                Quitar
-              </button>
+            <div className="p-4 rounded-xl" style={{ backgroundColor: '#E3F2E1', border: '1px dashed #4CAF50' }}>
+              <p className="text-sm font-bold text-green-800">¡Cupón Aplicado!</p>
+              <p className="text-xs font-mono text-green-700">{appliedCoupon.code} (-{formatPrice(appliedCoupon.discount_amount)})</p>
             </div>
           )}
         </section>
