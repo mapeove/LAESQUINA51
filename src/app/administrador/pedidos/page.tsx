@@ -44,22 +44,32 @@ function AdminOrdersContent() {
   useEffect(() => {
     let ignore = false;
     async function loadOrdersAndDrivers() {
-      const [ordersRes, driversRes] = await Promise.all([
+      const [ordersRes, driversRes, productsRes] = await Promise.all([
         supabase
           .from('orders')
-          .select('*, items:order_items(*, product:products(image, image_url)), driver:delivery_drivers(*)')
+          .select('*, items:order_items(*), driver:delivery_drivers(*)')
           .order('created_at', { ascending: false })
           .limit(100),
         supabase
           .from('delivery_drivers')
           .select('*')
           .eq('active', true)
-          .order('name', { ascending: true })
+          .order('name', { ascending: true }),
+        supabase
+          .from('products')
+          .select('id, image, image_url')
       ]);
 
       if (!ignore) {
         if (ordersRes.data) {
-          const typedOrders = ordersRes.data as Order[];
+          const productsMap = new Map((productsRes.data || []).map(p => [p.id, p]));
+          const typedOrders = (ordersRes.data as Order[]).map(order => ({
+            ...order,
+            items: order.items?.map((item: any) => ({
+              ...item,
+              product: productsMap.get(item.product_id) || null
+            }))
+          }));
           setOrders(typedOrders);
 
           const idParam = searchParams.get('id');

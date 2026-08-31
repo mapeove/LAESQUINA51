@@ -20,12 +20,26 @@ export default async function MiCuentaPage() {
     .eq('id', user.id)
     .single();
 
-  // Fetch orders
-  const { data: orders } = await supabase
-    .from('orders')
-    .select('*, items:order_items(*, product:products(image, image_url))')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+  // Fetch orders and products separately to avoid foreign key error
+  const [ordersRes, productsRes] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('*, items:order_items(*)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('products')
+      .select('id, image, image_url')
+  ]);
+
+  const productsMap = new Map((productsRes.data || []).map((p: any) => [p.id, p]));
+  const orders = (ordersRes.data || []).map((order: any) => ({
+    ...order,
+    items: order.items?.map((item: any) => ({
+      ...item,
+      product: productsMap.get(item.product_id) || null
+    }))
+  }));
 
   const activeOrders = orders?.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status)) || [];
   const pastOrders = orders?.filter(o => ['DELIVERED', 'CANCELLED'].includes(o.status)) || [];
