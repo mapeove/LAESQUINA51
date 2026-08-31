@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       cash_change_for,
       items,
       subtotal,
+      total,
       coupon_code,
     } = body;
 
@@ -88,14 +89,40 @@ export async function POST(request: Request) {
     }
 
     const secureDeliveryFee = Number(zoneData.delivery_fee) || 0;
-    
-    // We trust subtotal for now as products can be complex, but recalculate the final total
-    const secureTotal = Number(subtotal) + secureDeliveryFee;
+    const secureSubtotal = Number(subtotal) || 0;
+
+    let discountAmount = 0;
+    let cleanCouponCode: string | null = null;
+
+    if (coupon_code) {
+      cleanCouponCode = typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null;
+      if (cleanCouponCode) {
+        const { data: couponData, error: couponError } = await adminSupabase
+          .from('coupons')
+          .select('id, discount_amount, used, expires_at')
+          .eq('code', cleanCouponCode)
+          .eq('used', false)
+          .gt('expires_at', new Date().toISOString())
+          .maybeSingle();
+
+        if (couponError || !couponData) {
+          return NextResponse.json({ error: 'Cupón inválido, expirado o ya utilizado' }, { status: 400 });
+        }
+        discountAmount = Number(couponData.discount_amount) || 0;
+      }
+    }
+
+    const expectedTotal = Number(Math.max(0, secureSubtotal + secureDeliveryFee - discountAmount).toFixed(2));
+    const receivedTotal = Number(Number(total).toFixed(2));
+
+    if (Math.abs(expectedTotal - receivedTotal) > 0.05) {
+      return NextResponse.json(
+        { error: `El total calculado (${expectedTotal}€) no coincide con el recibido (${receivedTotal}€)` },
+        { status: 400 }
+      );
+    }
 
     // Generate a collision-safe order number.
-    // Strategy: timestamp last-5-digits + 3 random base-36 chars → 8 chars → E51-XXXXXXXX
-    // This avoids the race condition of "SELECT MAX then +1" where two concurrent
-    // requests read the same max and generate the same next number.
     const generateOrderNumber = () => {
       const ts = String(Date.now()).slice(-5);
       const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
@@ -113,7 +140,7 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join(', ');
 
-    if (coupon_code) {
+    if (cleanCouponCode) {
       // Use RPC for atomic transaction when a coupon is provided
       const rpcItems = items.map((item) => {
         const snapshotOptions = [...(item.selected_options || [])];
@@ -134,8 +161,8 @@ export async function POST(request: Request) {
       const { data: orderId, error: rpcError } = await adminSupabase.rpc('create_order_with_coupon', {
         p_user_id: body.user_id ?? null,
         p_order_number: orderNumber,
-        p_total: secureTotal,
-        p_subtotal: subtotal,
+        p_total: expectedTotal,
+        p_subtotal: secureSubtotal,
         p_delivery_fee: secureDeliveryFee,
         p_status: 'PENDING',
         p_payment_method: payment_method || 'CASH',
@@ -151,7 +178,7 @@ export async function POST(request: Request) {
         p_notes: notes ?? null,
         p_cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,
         p_items: rpcItems,
-        p_coupon_code: typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null
+        p_coupon_code: cleanCouponCode
       });
 
       if (rpcError) throw new Error(rpcError.message || 'Error aplicando el cupón o creando el pedido');
@@ -171,9 +198,9 @@ export async function POST(request: Request) {
           delivery_door: delivery_door ?? null,
           delivery_zone_id: zone_id,
           delivery_zone_name: zoneData.name,
-          subtotal,
+          subtotal: secureSubtotal,
           delivery_fee: secureDeliveryFee,
-          total: secureTotal,
+          total: expectedTotal,
           notes: notes ?? null,
           payment_method: payment_method || 'CASH',
           cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,
@@ -211,7 +238,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, orderNumber });
   } catch (error: unknown) {
     console.error('Order creation error:', error);
-    // Para depuración temporal devolvemos el error exacto
     let errorMessage = 'Error al procesar el pedido';
     if (error instanceof Error) {
       errorMessage = error.message;
