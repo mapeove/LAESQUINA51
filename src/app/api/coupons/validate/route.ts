@@ -6,7 +6,7 @@ export const revalidate = 0;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const rawCode = body?.code;
 
     const cleanCode = typeof rawCode === 'string' ? rawCode.trim().toUpperCase() : '';
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         valid: false, 
         error: 'Cupón inválido, expirado o ya utilizado.' 
       }, { 
-        status: 400,
+        status: 200,
         headers: { 'Cache-Control': 'no-store, max-age=0' }
       });
     }
@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       code: data.code, 
       discount_amount: Number(data.discount_amount) 
     }, {
+      status: 200,
       headers: { 'Cache-Control': 'no-store, max-age=0' }
     });
   } catch (err: unknown) {

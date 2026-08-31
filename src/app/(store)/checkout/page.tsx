@@ -26,26 +26,28 @@ export default function CheckoutPage() {
   const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   const handleApplyCoupon = async () => {
-    if (!couponInput.trim()) return;
+    const cleanCode = couponInput.trim().toUpperCase();
+    if (!cleanCode) return;
     setValidatingCoupon(true);
     setCouponError('');
     try {
       const res = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponInput.trim() })
+        body: JSON.stringify({ code: cleanCode })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
         
-      if (!res.ok) {
-        setCouponError(data.error || 'Cupón inválido, expirado o ya utilizado.');
+      if (!res.ok || !data?.valid) {
+        setCouponError(data?.error || 'Cupón inválido, expirado o ya utilizado.');
         setAppliedCoupon(null);
       } else {
-        setAppliedCoupon({ code: data.code, discount_amount: Number(data.discount_amount) });
+        setAppliedCoupon({ code: data.code || cleanCode, discount_amount: Number(data.discount_amount) });
         setCouponInput('');
       }
-    } catch (err) {
+    } catch {
       setCouponError('Error al validar el cupón.');
+      setAppliedCoupon(null);
     } finally {
       setValidatingCoupon(false);
     }

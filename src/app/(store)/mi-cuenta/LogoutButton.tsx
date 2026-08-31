@@ -1,13 +1,11 @@
 'use client';
 
 import { LogOut } from 'lucide-react';
-import { useCart } from '@/features/cart/cart-context';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function LogoutButton() {
-  const { clearCart } = useCart();
   const supabase = createClient();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -16,7 +14,6 @@ export default function LogoutButton() {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
-      clearCart();
       await supabase.auth.signOut();
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (e) {
