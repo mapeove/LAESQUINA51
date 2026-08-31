@@ -234,7 +234,7 @@ export default function OrderHistoryClient({ pastOrders }: { pastOrders: Order[]
                   return (
                   <div key={idx} className="p-3 rounded-xl bg-neutral-50 border border-neutral-100 flex items-center gap-3">
                     {(() => {
-                      const joinedProduct = (item as any).product || null;
+                      const joinedProduct = (item as Record<string, unknown>).product as Record<string, unknown> | null;
                       const imgSrc = joinedProduct?.image_url || joinedProduct?.image || null;
                       return imgSrc ? (
                         // eslint-disable-next-line @next/next/no-img-element

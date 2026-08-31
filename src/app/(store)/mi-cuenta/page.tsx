@@ -32,12 +32,12 @@ export default async function MiCuentaPage() {
       .select('id, image, image_url')
   ]);
 
-  const productsMap = new Map((productsRes.data || []).map((p: any) => [p.id, p]));
-  const orders = (ordersRes.data || []).map((order: any) => ({
+  const productsMap = new Map((productsRes.data || []).map((p: Record<string, unknown>) => [p.id, p]));
+  const orders = (ordersRes.data || []).map((order: Record<string, unknown>) => ({
     ...order,
-    items: order.items?.map((item: any) => ({
+    items: (order.items as Record<string, unknown>[])?.map((item: Record<string, unknown>) => ({
       ...item,
-      product: productsMap.get(item.product_id) || null
+      product: productsMap.get(item.product_id as string) || null
     }))
   }));
 

@@ -215,26 +215,26 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
         <div className="mt-6 bg-white p-5 rounded-xl shadow-sm border" style={{ borderColor: '#E8D5A8' }}>
           <h4 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#A94F2F' }}>Detalle de tu pedido</h4>
           <div className="space-y-3">
-            {order.items.map((item: any, idx: number) => {
-              const joinedProduct = item.product || null;
+            {order.items.map((item: Record<string, unknown>, idx: number) => {
+              const joinedProduct = item.product as Record<string, unknown> | null;
               const imgSrc = joinedProduct?.image_url || joinedProduct?.image || null;
               return (
                 <div key={idx} className="flex items-center gap-3 bg-[#F3E8CC] p-3 rounded-lg text-[#3A2418]">
                   {imgSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={imgSrc} alt={item.product_name_snapshot || item.product_name} className="w-12 h-12 rounded object-cover border border-[#D5C29A]" />
+                    <img src={imgSrc as string} alt={(item.product_name_snapshot || item.product_name) as string} className="w-12 h-12 rounded object-cover border border-[#D5C29A]" />
                   ) : (
                     <div className="w-12 h-12 rounded bg-[#E8D5A8] flex items-center justify-center text-xl border border-[#D5C29A]">🍔</div>
                   )}
                   <div className="flex-1">
-                    <p className="font-bold text-sm">{item.product_name_snapshot || item.product_name}</p>
-                    <p className="text-xs font-mono text-[#65513F]">Cant: {item.quantity}</p>
+                    <p className="font-bold text-sm">{(item.product_name_snapshot || item.product_name) as string}</p>
+                    <p className="text-xs font-mono text-[#65513F]">Cant: {item.quantity as number}</p>
                     {/* Render options if any */}
-                    {(item.options_snapshot || []).map((opt: any, oidx: number) => (
-                      <p key={oidx} className="text-[10px] text-[#65513F] leading-tight mt-1">• {opt.name}</p>
+                    {((item.options_snapshot as Record<string, unknown>[]) || []).map((opt, oidx: number) => (
+                      <p key={oidx} className="text-[10px] text-[#65513F] leading-tight mt-1">• {opt.name as string}</p>
                     ))}
-                    {(item.extras_snapshot || []).map((ext: any, eidx: number) => (
-                      <p key={eidx} className="text-[10px] text-[#A94F2F] leading-tight mt-1">+ {ext.name}</p>
+                    {((item.extras_snapshot as Record<string, unknown>[]) || []).map((ext, eidx: number) => (
+                      <p key={eidx} className="text-[10px] text-[#A94F2F] leading-tight mt-1">+ {ext.name as string}</p>
                     ))}
                   </div>
                   <span className="font-bold font-mono text-[#A94F2F]">€{Number(item.item_total || item.line_total).toFixed(2)}</span>

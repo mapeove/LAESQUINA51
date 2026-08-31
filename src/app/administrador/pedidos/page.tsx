@@ -65,9 +65,9 @@ function AdminOrdersContent() {
           const productsMap = new Map((productsRes.data || []).map(p => [p.id, p]));
           const typedOrders = (ordersRes.data as Order[]).map(order => ({
             ...order,
-            items: order.items?.map((item: any) => ({
+            items: order.items?.map((item: Record<string, unknown>) => ({
               ...item,
-              product: productsMap.get(item.product_id) || null
+              product: productsMap.get(item.product_id as string) || null
             }))
           }));
           setOrders(typedOrders);
