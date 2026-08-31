@@ -232,8 +232,18 @@ export default function OrderHistoryClient({ pastOrders }: { pastOrders: Order[]
                 {selectedOrder.items?.map((rawItem, idx: number) => {
                   const item = rawItem as unknown as OrderItemSnapshot;
                   return (
-                  <div key={idx} className="p-3 rounded-xl bg-neutral-50 border border-neutral-100">
-                    <div className="flex justify-between items-start">
+                  <div key={idx} className="p-3 rounded-xl bg-neutral-50 border border-neutral-100 flex items-center gap-3">
+                    {(() => {
+                      const joinedProduct = (item as any).product || null;
+                      const imgSrc = joinedProduct?.image_url || joinedProduct?.image || null;
+                      return imgSrc ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={imgSrc} alt={item.product_name || item.product_name_snapshot} className="w-12 h-12 rounded object-cover border border-neutral-200" />
+                      ) : (
+                        <div className="w-12 h-12 rounded bg-neutral-200 flex items-center justify-center text-xl border border-neutral-300">🍔</div>
+                      );
+                    })()}
+                    <div className="flex-1 flex justify-between items-start">
                       <div className="flex gap-2">
                         <span className="font-black text-[#A94F2F]">{item.quantity}x</span>
                         <div>

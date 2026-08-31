@@ -23,7 +23,7 @@ function AdminOrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [drivers, setDrivers] = useState<DeliveryDriver[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('ALL');
+  const [activeTab, setActiveTab] = useState('ACTIVE');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);

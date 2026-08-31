@@ -23,7 +23,7 @@ export default async function MiCuentaPage() {
   // Fetch orders
   const { data: orders } = await supabase
     .from('orders')
-    .select('*')
+    .select('*, items:order_items(*, product:products(image, image_url))')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
