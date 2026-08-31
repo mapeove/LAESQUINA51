@@ -90,26 +90,16 @@ export async function POST(request: Request) {
     // We trust subtotal for now as products can be complex, but recalculate the final total
     const secureTotal = Number(subtotal) + secureDeliveryFee;
 
-    // Generate order number based on the maximum existing order number
-    const { data: maxOrders } = await adminSupabase
-      .from('orders')
-      .select('order_number')
-      .order('order_number', { ascending: false })
-      .limit(1);
-
-    const maxOrder = maxOrders?.[0];
-
-    let nextNum = 1;
-    if (maxOrder && maxOrder.order_number) {
-      // Extraemos el número de "E51-XXXXXX"
-      const match = maxOrder.order_number.match(/E51-(\d+)/);
-      if (match && match[1]) {
-        nextNum = parseInt(match[1], 10) + 1;
-      }
-    }
-    
-    // Si falla el parseo o no hay orders, nextNum será 1 (o count + 1 como fallback si quisiéramos)
-    const orderNumber = `E51-${String(nextNum).padStart(6, '0')}`;
+    // Generate a collision-safe order number.
+    // Strategy: timestamp last-5-digits + 3 random base-36 chars → 8 chars → E51-XXXXXXXX
+    // This avoids the race condition of "SELECT MAX then +1" where two concurrent
+    // requests read the same max and generate the same next number.
+    const generateOrderNumber = () => {
+      const ts = String(Date.now()).slice(-5);
+      const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
+      return `E51-${ts}${rand}`;
+    };
+    const orderNumber = generateOrderNumber();
 
     const fullAddress = [
       delivery_address,

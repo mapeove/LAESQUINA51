@@ -10,12 +10,12 @@ import { formatPrice } from '@/lib/utils';
 import OrderChat from '@/components/OrderChat';
 
 const TABS: { id: string; label: string }[] = [
-  { id: 'ALL', label: 'Todos' },
+  { id: 'ACTIVE', label: 'Todos' },
   { id: 'PENDING', label: 'Recibido' },
   { id: 'PREPARING', label: 'Preparando' },
   { id: 'READY', label: 'Listo' },
   { id: 'OUT_FOR_DELIVERY', label: 'En reparto' },
-  { id: 'DELIVERED', label: 'Entregados' },
+  { id: 'DELIVERED', label: 'Recibos' },
   { id: 'CANCELLED', label: 'Cancelados' },
 ];
 
@@ -47,7 +47,7 @@ function AdminOrdersContent() {
       const [ordersRes, driversRes] = await Promise.all([
         supabase
           .from('orders')
-          .select('*, items:order_items(*), driver:delivery_drivers(*)')
+          .select('*, items:order_items(*, product:products(image, image_url)), driver:delivery_drivers(*)')
           .order('created_at', { ascending: false })
           .limit(100),
         supabase
@@ -162,8 +162,8 @@ function AdminOrdersContent() {
   };
 
   const filteredOrders =
-    activeTab === 'ALL'
-      ? orders
+    activeTab === 'ACTIVE'
+      ? orders.filter((o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED')
       : orders.filter((o) => o.status === activeTab);
 
   const today = new Date();
@@ -522,24 +522,51 @@ function AdminOrdersContent() {
 
                 {/* Items summary */}
                 <div className="bg-white p-5 rounded-2xl border border-[#E8D5A8] shadow-sm h-full flex flex-col">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#A94F2F] mb-4">Productos</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#A94F2F] mb-4">Productos del pedido</h3>
                   <div className="space-y-3 mb-4 flex-1">
                     {selectedOrder.items?.map((item, idx) => (
-                      <div key={idx} className="flex justify-between text-sm p-3 rounded-xl bg-[#F3E8CC] text-[#3A2418]">
-                        <div>
-                          <span className="font-black text-[#A94F2F] mr-1">{item.quantity}x</span> 
-                          <span className="font-bold">{item.product_name}</span>
+                      <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-[#F3E8CC] text-[#3A2418]">
+                        {/* Product photo from joined products table */}
+                        {(() => {
+                          const joinedProduct = (item as unknown as Record<string, unknown>).product as Record<string, unknown> | null | undefined;
+                          const imgSrc = joinedProduct?.image_url || joinedProduct?.image || null;
+                          return imgSrc ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={String(imgSrc)}
+                              alt={item.product_name}
+                              className="w-14 h-14 rounded-lg object-cover shrink-0 border border-[#D5C29A]"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-lg bg-[#E8D5A8] shrink-0 flex items-center justify-center text-[#B88727] text-xs font-bold border border-[#D5C29A]">
+                              🍔
+                            </div>
+                          );
+                        })()}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-[#3A2418] leading-tight truncate">{item.product_name}</p>
+                          <p className="text-xs font-mono text-[#65513F] mt-0.5">
+                            {formatPrice(item.product_price)} × {item.quantity}
+                          </p>
                         </div>
-                        <span className="font-mono font-bold">{formatPrice(item.line_total)}</span>
+                        <span className="font-mono font-bold text-sm text-[#A94F2F] shrink-0">{formatPrice(item.line_total)}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="border-t-2 border-[#D5C29A] pt-4 flex justify-between items-center text-xl font-black">
+                  <div className="border-t border-[#D5C29A]/60 pt-3 space-y-1.5 text-sm">
+                    <div className="flex justify-between text-[#65513F]">
+                      <span>Subtotal</span>
+                      <span className="font-mono">{formatPrice(selectedOrder.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-[#65513F]">
+                      <span>Gastos de envío</span>
+                      <span className="font-mono">{formatPrice(selectedOrder.delivery_fee)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xl font-black border-t-2 border-[#D5C29A] pt-2 mt-1">
                       <span className="uppercase text-[#3A2418]">TOTAL</span>
-                    <span className="font-mono text-[#A94F2F]">
-                      {formatPrice(selectedOrder.total)}
-                    </span>
+                      <span className="font-mono text-[#A94F2F]">{formatPrice(selectedOrder.total)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
