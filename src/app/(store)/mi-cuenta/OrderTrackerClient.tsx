@@ -72,7 +72,7 @@ export default function OrderTrackerClient({ order: initialOrder }: { order: Ord
                 audioRef.current.play().catch(e => console.warn('Autoplay blocked by browser:', e));
               }
             }
-            setOrder(newOrder);
+            setOrder(prev => ({ ...newOrder, items: prev.items, driver: prev.driver }));
           }
         }
       )
