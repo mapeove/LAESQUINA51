@@ -15,7 +15,8 @@ import {
   Settings, 
   LogOut, 
   Menu, 
-  X 
+  X,
+  Ticket
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { AdminOrderNotifier } from './AdminOrderNotifier';
@@ -25,6 +26,7 @@ const links = [
   { name: 'Pedidos', href: '/administrador/pedidos', icon: ClipboardList },
   { name: 'Productos', href: '/administrador/productos', icon: UtensilsCrossed },
   { name: 'Categorías', href: '/administrador/categorias', icon: Tag },
+  { name: 'Cupones', href: '/administrador/cupones', icon: Ticket },
   { name: 'Publicidad', href: '/administrador/publicidad', icon: Megaphone },
   { name: 'Repartidores', href: '/administrador/repartidores', icon: Truck },
   { name: 'Horarios', href: '/administrador/horarios', icon: Clock },

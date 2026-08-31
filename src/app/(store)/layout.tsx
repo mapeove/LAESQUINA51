@@ -1,5 +1,6 @@
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
@@ -43,6 +44,7 @@ export default async function StoreLayout({
       <main className="flex-grow pb-20 md:pb-0 safe-bottom">
         {children}
       </main>
+      <WhatsAppButton />
       <BottomNav />
     </div>
   );

@@ -80,10 +80,10 @@ export async function sendWelcomeEmail({
           <tr>
             <td style="padding: 35px 30px 25px 30px;">
               <h2 style="color: #A94F2F; font-size: 22px; margin: 0 0 15px 0; font-weight: 700;">
-                ¡Hola, ${name}! 👋
+                ¡Hola, ${name}! 🍔
               </h2>
               <p style="font-size: 15px; line-height: 1.6; color: #3A2418; margin: 0 0 15px 0;">
-                ¡Te damos la bienvenida a la familia de <strong class="notranslate" translate="no">La Esquina 51</strong>! 🍔❤️
+                ¡Te damos la bienvenida a la familia de <strong class="notranslate" translate="no">La Esquina 51</strong>! 🎉✨
               </p>
               <p style="font-size: 14px; line-height: 1.6; color: #65513F; margin: 0 0 25px 0;">
                 Tu cuenta ha sido creada con éxito. Ya puedes explorar toda nuestra carta, deleitarte con nuestras hamburguesas virales, perros calientes, boxes, shawarmas y empanadas con el auténtico sabor venezolano, y pedir a domicilio o para recoger.
@@ -94,7 +94,7 @@ export async function sendWelcomeEmail({
                 <tr>
                   <td style="padding: 16px 20px; text-align: center;">
                     <p style="margin: 0 0 6px 0; font-size: 12px; text-transform: uppercase; color: #A94F2F; font-weight: 800; letter-spacing: 1px;">
-                      🛵 Sabor de calle directo a tu puerta
+                      🚀 Sabor de calle directo a tu puerta
                     </p>
                     <p style="margin: 0; font-size: 13px; color: #3A2418; font-weight: 600;">
                       Reparto a domicilio rápido y seguimiento en tiempo real.
@@ -108,14 +108,14 @@ export async function sendWelcomeEmail({
                 <tr>
                   <td align="center">
                     <a href="${appUrl}/menu" target="_blank" style="background-color: #B88727; color: #FFF7E5; text-decoration: none; padding: 14px 32px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(184, 135, 39, 0.25);">
-                      VER MENÚ Y REALIZAR PEDIDO →
+                      VER MENÚ Y REALIZAR PEDIDO ➔
                     </a>
                   </td>
                 </tr>
               </table>
 
               <p style="font-size: 13px; line-height: 1.5; color: #65513F; margin: 0;">
-                Si tienes alguna pregunta o instrucción especial, escríbenos directamente por WhatsApp: <strong>+34 633 18 43 54</strong>.
+                Si tienes alguna pregunta o instrucción especial, escríbenos directamente por WhatsApp: <strong>+34 604 26 72 41</strong>.
               </p>
             </td>
           </tr>
@@ -124,10 +124,10 @@ export async function sendWelcomeEmail({
           <tr>
             <td style="background-color: #F3E8CC; border-top: 1px solid #E8D5A8; padding: 20px 30px; text-align: center;">
               <p style="font-size: 12px; color: #65513F; margin: 0 0 6px 0;">
-                <strong class="notranslate" translate="no">La Esquina 51</strong> · Comida Callejera Venezolana en Sevilla
+                <strong class="notranslate" translate="no">La Esquina 51</strong> • Comida Callejera Venezolana en Sevilla
               </p>
               <p style="font-size: 11px; color: #8C7662; margin: 0;">
-                <a href="${appUrl}" style="color: #A94F2F; text-decoration: none; font-weight: 600;">laesquina51.es</a> · Viernes, Sábados y Domingos
+                <a href="${appUrl}" style="color: #A94F2F; text-decoration: none; font-weight: 600;">laesquina51.es</a> • Viernes, Sábados y Domingos
               </p>
             </td>
           </tr>
@@ -143,6 +143,143 @@ export async function sendWelcomeEmail({
     from: smtpFrom,
     to: email,
     subject: '¡Bienvenido a La Esquina 51! 🍔 Sabor de calle con alma',
+    headers: {
+      'Content-Language': 'es',
+    },
+    html,
+    attachments,
+  });
+}
+
+export async function sendCouponEmail({
+  email,
+  fullName,
+  couponCode,
+  discountAmount,
+  expiresAt,
+}: {
+  email: string;
+  fullName?: string;
+  couponCode: string;
+  discountAmount: number;
+  expiresAt: string;
+}) {
+  const name = fullName ? fullName.trim() : 'Amigo/a';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://laesquina51.es';
+  
+  const logoPath = path.join(process.cwd(), 'public', 'images', 'logo-esquina51.jpg');
+  const hasLogo = fs.existsSync(logoPath);
+
+  const attachments = hasLogo
+    ? [
+        {
+          filename: 'logo-esquina51.jpg',
+          path: logoPath,
+          cid: 'logo51',
+        },
+      ]
+    : [];
+
+  const logoSrc = hasLogo ? 'cid:logo51' : `${appUrl}/images/logo-esquina51.jpg`;
+  
+  const formattedDate = new Date(expiresAt).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es" translate="no" class="notranslate">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google" content="notranslate">
+  <meta http-equiv="Content-Language" content="es">
+  <title>¡Tienes un Cupón de La Esquina 51!</title>
+</head>
+<body class="notranslate" translate="no" style="margin: 0; padding: 0; background-color: #F3E8CC; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #3A2418;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F3E8CC; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="600" style="max-width: 600px; background-color: #FFF7E5; border-radius: 16px; border: 1px solid #E8D5A8; overflow: hidden; box-shadow: 0 4px 12px rgba(58, 36, 24, 0.08); margin: 0 auto;">
+          <!-- HEADER -->
+          <tr>
+            <td align="center" style="background-color: #3A2418; padding: 30px 20px 25px 20px;">
+              <img src="${logoSrc}" alt="La Esquina 51" width="160" height="160" style="width: 160px; height: 160px; object-fit: contain; display: block; border-radius: 50%; border: 3px solid #B88727;" />
+              <h1 class="notranslate" translate="no" style="color: #F3E8CC; font-size: 26px; margin: 15px 0 0 0; text-transform: uppercase; letter-spacing: 2px; font-weight: 800;">
+                LA ESQUINA 51
+              </h1>
+            </td>
+          </tr>
+
+          <!-- BODY CONTENT -->
+          <tr>
+            <td style="padding: 35px 30px 25px 30px;">
+              <h2 style="color: #A94F2F; font-size: 22px; margin: 0 0 15px 0; font-weight: 700;">
+                ¡Hola, ${name}! 🍔
+              </h2>
+              <p style="font-size: 15px; line-height: 1.6; color: #3A2418; margin: 0 0 15px 0;">
+                ¡Te hemos enviado un regalo especial para que disfrutes de <strong class="notranslate" translate="no">La Esquina 51</strong>! 🎉
+              </p>
+              
+              <!-- PROMO BOX -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F3E8CC; border: 1px dashed #B88727; border-radius: 12px; margin: 25px 0;">
+                <tr>
+                  <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #65513F; font-weight: 600;">
+                      TU CUPÓN DE DESCUENTO
+                    </p>
+                    <div style="background-color: #FFF7E5; border: 2px solid #A94F2F; border-radius: 8px; padding: 10px 20px; display: inline-block; margin-bottom: 10px;">
+                      <span style="font-size: 24px; font-weight: 900; color: #A94F2F; letter-spacing: 2px;">${couponCode}</span>
+                    </div>
+                    <p style="margin: 0; font-size: 18px; color: #3A2418; font-weight: 800;">
+                      Valor: ${discountAmount}€
+                    </p>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #A94F2F;">
+                      Válido hasta: ${formattedDate}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA BUTTON -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${appUrl}/menu" target="_blank" style="background-color: #B88727; color: #FFF7E5; text-decoration: none; padding: 14px 32px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(184, 135, 39, 0.25);">
+                      USAR MI CUPÓN 🚀
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size: 13px; line-height: 1.5; color: #65513F; margin: 0;">
+                Solo introduce el código durante tu pedido. Si tienes alguna pregunta, escríbenos por WhatsApp: <strong>+34 604 26 72 41</strong>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background-color: #F3E8CC; border-top: 1px solid #E8D5A8; padding: 20px 30px; text-align: center;">
+              <p style="font-size: 12px; color: #65513F; margin: 0 0 6px 0;">
+                <strong class="notranslate" translate="no">La Esquina 51</strong> • Comida Callejera Venezolana
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  return await mailTransporter.sendMail({
+    from: smtpFrom,
+    to: email,
+    subject: `¡Tienes un cupón de ${discountAmount}€ en La Esquina 51! 🍔`,
     headers: {
       'Content-Language': 'es',
     },

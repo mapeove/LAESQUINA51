@@ -6,7 +6,7 @@ export const APP_NAME = 'La Esquina 51'
 export const APP_TAGLINE = 'Venezuelan Street Food'
 export const APP_SLOGAN = 'Sabor de calle. Sabor de casa.'
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://laesquina51.es'
-export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '633184354'
+export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '604267241'
 
 export const ORDER_NUMBER_PREFIX = 'E51-'
 

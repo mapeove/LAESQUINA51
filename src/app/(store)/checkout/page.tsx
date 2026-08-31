@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCart } from '@/features/cart/cart-context';
 import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
-import { Banknote, Wallet, ArrowLeft, ShieldCheck, UserCircle } from 'lucide-react';
+import { Banknote, Wallet, ArrowLeft, ShieldCheck, UserCircle, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { DeliveryZone } from '@/types';
@@ -18,7 +18,41 @@ export default function CheckoutPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [storeClosed, setStoreClosed] = useState(false);
   const [error, setError] = useState('');
-  const [bizumPhone, setBizumPhone] = useState('34633184354');
+  
+  // Coupon States
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{code: string, discount_amount: number} | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setValidatingCoupon(true);
+    setCouponError('');
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('id, code, discount_amount')
+        .eq('code', couponInput.trim().toUpperCase())
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+        
+      if (error || !data) {
+        setCouponError('Cupón inválido, expirado o ya utilizado.');
+        setAppliedCoupon(null);
+      } else {
+        setAppliedCoupon({ code: data.code, discount_amount: Number(data.discount_amount) });
+        setCouponInput('');
+      }
+    } catch (err) {
+      setCouponError('Error al validar el cupón.');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const [bizumPhone, setBizumPhone] = useState('34604267241');
   const [userId, setUserId] = useState<string | null>(null);
   
   // Delivery Zones Configured in Admin
@@ -157,7 +191,7 @@ export default function CheckoutPage() {
 
   // Calculate delivery fee
   const DELIVERY_FEE = selectedZone?.delivery_fee ? Number(selectedZone.delivery_fee) : 0;
-  const total = subtotal + DELIVERY_FEE;
+  const total = Math.max(0, subtotal + DELIVERY_FEE - (appliedCoupon?.discount_amount || 0));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,6 +210,7 @@ export default function CheckoutPage() {
         user_id: userId,
         items,
         subtotal,
+        coupon_code: appliedCoupon?.code,
         delivery_fee: DELIVERY_FEE,
         total,
         cash_change_for: formData.payment_method === 'CASH' && formData.cash_change_for ? parseFloat(formData.cash_change_for) : null,
@@ -445,6 +480,54 @@ export default function CheckoutPage() {
               <div className="p-2.5 rounded-lg border font-mono text-center text-lg font-bold tracking-wider" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8', color: '#A94F2F' }}>
                 {bizumPhone}
               </div>
+            </div>
+          )}
+        </section>
+
+        
+        {/* Seccion Cupones */}
+        <section className="p-6 rounded-2xl border space-y-4 shadow-sm" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+          <h2 className="text-lg font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2" style={{ fontFamily: 'Oswald, sans-serif', color: '#3A2418', borderColor: '#E8D5A8' }}>
+            <Tag size={20} className="text-[#A94F2F]" /> Cupón de Descuento
+          </h2>
+          
+          {!appliedCoupon ? (
+            <div className="space-y-2">
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wider" style={{ color: '#65513F' }}>Si tienes un cupón de descuento, colócalo aquí</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  placeholder="CÓDIGO"
+                  className="flex-1 p-3 rounded-xl font-mono text-sm focus:outline-none uppercase"
+                  style={{ backgroundColor: '#F3E8CC', border: '1px solid #D4C4A0', color: '#3A2418' }}
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={validatingCoupon || !couponInput.trim()}
+                  className="px-4 rounded-xl font-bold text-xs uppercase tracking-wider disabled:opacity-50"
+                  style={{ backgroundColor: '#3A2418', color: '#FFF7E5' }}
+                >
+                  {validatingCoupon ? '...' : 'Aplicar'}
+                </button>
+              </div>
+              {couponError && <p className="text-xs font-medium text-red-600 font-mono mt-1">{couponError}</p>}
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl flex items-center justify-between" style={{ backgroundColor: '#E3F2E1', border: '1px dashed #4CAF50' }}>
+              <div>
+                <p className="text-sm font-bold text-green-800">¡Cupón Aplicado!</p>
+                <p className="text-xs font-mono text-green-700">{appliedCoupon.code} (-{formatPrice(appliedCoupon.discount_amount)})</p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setAppliedCoupon(null)}
+                className="text-xs font-bold text-red-600 uppercase hover:underline"
+              >
+                Quitar
+              </button>
             </div>
           )}
         </section>
