@@ -10,7 +10,7 @@ import { formatPrice } from '@/lib/utils';
 import OrderChat from '@/components/OrderChat';
 
 const TABS: { id: string; label: string }[] = [
-  { id: 'ACTIVE', label: 'Todos' },
+  { id: 'ALL', label: 'Todos' },
   { id: 'PENDING', label: 'Recibido' },
   { id: 'PREPARING', label: 'Preparando' },
   { id: 'READY', label: 'Listo' },
@@ -23,7 +23,7 @@ function AdminOrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [drivers, setDrivers] = useState<DeliveryDriver[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('ACTIVE');
+  const [activeTab, setActiveTab] = useState('PENDING');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -72,6 +72,12 @@ function AdminOrdersContent() {
           })) as unknown as Order[];
           setOrders(typedOrders);
 
+          // Always ensure the currently selected order is hydrated with the latest data (e.g. items)
+          setSelectedOrder((prev) => {
+            if (!prev) return prev;
+            return typedOrders.find((o) => o.id === prev.id) || prev;
+          });
+
           const idParam = searchParams.get('id');
           if (idParam) {
             const order = typedOrders.find((o) => o.id === idParam);
@@ -91,10 +97,10 @@ function AdminOrdersContent() {
     const handleNewOrder = (e: Event) => {
       const customEvent = e as CustomEvent<Order>;
       const newOrder = customEvent.detail;
-      setOrders(prev => {
-        if (prev.find(o => o.id === newOrder.id)) return prev;
-        return [newOrder, ...prev];
-      });
+      
+      // Fetch full order data including items
+      void loadOrdersAndDrivers();
+      
       setHighlightedOrderId(newOrder.id);
       setTimeout(() => {
         setHighlightedOrderId(null);
@@ -123,6 +129,11 @@ function AdminOrdersContent() {
       const updatedOrder = { ...selectedOrder, status };
       setSelectedOrder(updatedOrder);
       setOrders(orders.map((o) => (o.id === selectedOrder.id ? updatedOrder : o)));
+      
+      if (status === 'DELIVERED') {
+        setActiveTab('PENDING');
+        setSelectedOrder(null);
+      }
     }
     setUpdating(false);
   };
@@ -172,8 +183,8 @@ function AdminOrdersContent() {
   };
 
   const filteredOrders =
-    activeTab === 'ACTIVE'
-      ? orders.filter((o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED')
+    activeTab === 'ALL'
+      ? orders
       : orders.filter((o) => o.status === activeTab);
 
   const today = new Date();
