@@ -30,16 +30,15 @@ export default function CheckoutPage() {
     setValidatingCoupon(true);
     setCouponError('');
     try {
-      const { data, error } = await supabase
-        .from('coupons')
-        .select('id, code, discount_amount')
-        .eq('code', couponInput.trim().toUpperCase())
-        .eq('used', false)
-        .gt('expires_at', new Date().toISOString())
-        .single();
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponInput.trim() })
+      });
+      const data = await res.json();
         
-      if (error || !data) {
-        setCouponError('Cupón inválido, expirado o ya utilizado.');
+      if (!res.ok) {
+        setCouponError(data.error || 'Cupón inválido, expirado o ya utilizado.');
         setAppliedCoupon(null);
       } else {
         setAppliedCoupon({ code: data.code, discount_amount: Number(data.discount_amount) });

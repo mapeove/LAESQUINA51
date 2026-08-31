@@ -42,11 +42,8 @@ CREATE POLICY "Admins can manage coupons" ON coupons
         )
     );
 
--- Any authenticated user can read a coupon to validate it
-CREATE POLICY "Users can view coupons" ON coupons
-    FOR SELECT
-    TO authenticated
-    USING (true);
+-- Eliminada la política pública de "Users can view coupons" por motivos de seguridad.
+-- La validación de cupones se realizará server-side (Next.js API con adminSupabase).
 
 -- 6. RLS Policies for coupon_distribution_history
 CREATE POLICY "Admins can manage coupon history" ON coupon_distribution_history
@@ -71,9 +68,14 @@ CREATE OR REPLACE FUNCTION create_order_with_coupon(
   p_payment_status TEXT,
   p_customer_name TEXT,
   p_customer_phone TEXT,
+  p_customer_email TEXT,
   p_customer_address TEXT,
+  p_delivery_floor TEXT,
+  p_delivery_door TEXT,
   p_delivery_zone_id UUID,
+  p_delivery_zone_name TEXT,
   p_notes TEXT,
+  p_cash_change_for NUMERIC,
   p_items JSONB,
   p_coupon_code TEXT
 ) RETURNS UUID AS $$
@@ -83,6 +85,11 @@ DECLARE
   v_discount_amount NUMERIC := 0;
   v_item JSONB;
 BEGIN
+  -- Security check: Ensure the caller is either service_role or matching the user_id
+  IF NULLIF(current_setting('role', true), '') != 'service_role' AND auth.uid() IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
   -- Handle coupon if provided
   IF p_coupon_code IS NOT NULL AND p_coupon_code != '' THEN
     -- Try to lock and get the coupon
@@ -122,9 +129,14 @@ BEGIN
     payment_status,
     customer_name,
     customer_phone,
+    customer_email,
     customer_address,
+    delivery_floor,
+    delivery_door,
     delivery_zone_id,
+    delivery_zone_name,
     notes,
+    cash_change_for,
     coupon_id,
     discount_amount
   ) VALUES (
@@ -138,9 +150,14 @@ BEGIN
     p_payment_status,
     p_customer_name,
     p_customer_phone,
+    p_customer_email,
     p_customer_address,
+    p_delivery_floor,
+    p_delivery_door,
     p_delivery_zone_id,
+    p_delivery_zone_name,
     p_notes,
+    p_cash_change_for,
     v_coupon_id,
     v_discount_amount
   ) RETURNING id INTO v_order_id;
@@ -151,18 +168,28 @@ BEGIN
     INSERT INTO order_items (
       order_id,
       product_id,
+      product_name_snapshot,
+      product_price_snapshot,
       quantity,
-      unit_price,
+      item_total,
+      extras_snapshot,
       options_snapshot
     ) VALUES (
       v_order_id,
       (v_item->>'product_id')::UUID,
+      v_item->>'product_name_snapshot',
+      (v_item->>'product_price_snapshot')::NUMERIC,
       (v_item->>'quantity')::INTEGER,
-      (v_item->>'unit_price')::NUMERIC,
+      (v_item->>'item_total')::NUMERIC,
+      v_item->'extras_snapshot',
       v_item->'options_snapshot'
     );
   END LOOP;
 
   RETURN v_order_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Revoke public execution to force usage through the server-side API (service_role)
+REVOKE ALL ON FUNCTION create_order_with_coupon FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION create_order_with_coupon TO service_role;

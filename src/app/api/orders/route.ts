@@ -122,8 +122,11 @@ export async function POST(request: Request) {
         }
         return {
           product_id: item.product_id,
+          product_name_snapshot: item.product_name,
+          product_price_snapshot: item.product_price,
           quantity: item.quantity,
-          unit_price: item.product_price,
+          item_total: item.line_total,
+          extras_snapshot: item.selected_extras ?? [],
           options_snapshot: snapshotOptions,
         };
       });
@@ -139,9 +142,14 @@ export async function POST(request: Request) {
         p_payment_status: 'PENDING',
         p_customer_name: customer_name,
         p_customer_phone: cleanPhone,
+        p_customer_email: customer_email ?? null,
         p_customer_address: fullAddress,
+        p_delivery_floor: delivery_floor ?? null,
+        p_delivery_door: delivery_door ?? null,
         p_delivery_zone_id: zone_id,
+        p_delivery_zone_name: zoneData.name,
         p_notes: notes ?? null,
+        p_cash_change_for: payment_method === 'CASH' && cash_change_for ? Number(cash_change_for) : null,
         p_items: rpcItems,
         p_coupon_code: coupon_code
       });

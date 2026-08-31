@@ -30,26 +30,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    // 1. Get eligible users (profiles)
-    const { data: profiles, error: profilesError } = await adminSupabase
-      .from('profiles')
-      .select('id, full_name');
-      
-    if (profilesError) throw profilesError;
-
-    // Get Auth users for email
-    const { data: authUsers, error: usersError } = await adminSupabase.auth.admin.listUsers();
+    // 1. Get eligible auth users directly (ignore profiles)
+    const { data: authList, error: usersError } = await adminSupabase.auth.admin.listUsers();
     if (usersError) throw usersError;
-
-    // We join the emails
-    const eligibleCandidates = profiles.map(p => {
-      const u = authUsers.users.find(authU => authU.id === p.id);
-      return {
-        id: p.id,
-        full_name: p.full_name,
-        email: u?.email
-      };
-    }).filter(c => c.email);
+    // Ensure email is present
+    const eligibleAuthUsers = authList.users.filter(u => u.email);
+    // Map to required shape (id, full_name, email)
+    const eligibleCandidates = eligibleAuthUsers.map(u => ({
+      id: u.id,
+      full_name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || '',
+      email: u.email!
+    }));
 
     // 2. Filter users who got a coupon in last 3 months
     const threeMonthsAgo = new Date();
