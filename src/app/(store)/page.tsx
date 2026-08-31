@@ -124,69 +124,57 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* B. LO MÁS VIRAL — dinámico, usa el primer producto destacado del panel de admin */}
-      {featuredProducts.length > 0 && (() => {
-        const hero = featuredProducts[0];
-        const heroImg = hero.image_url || hero.image;
-        return (
-          <section className="px-4 py-6 max-w-6xl mx-auto">
-            <div className="p-6 md:p-10 rounded-3xl relative overflow-hidden shadow-md" style={{ backgroundColor: '#FFF7E5', border: '2px solid #E8D5A8' }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                {/* Image side */}
-                <div className="relative h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid #D4C4A0' }}>
-                  {heroImg ? (
-                    <Image
-                      src={heroImg}
-                      alt={hero.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 500px"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-[#E8D5A8] flex items-center justify-center text-5xl">🍔</div>
-                  )}
-                </div>
+      {/* B. SECCIÓN BOX MINI-MONSTER CON FOTOGRAFÍA REAL GRANDE */}
+      <section className="px-4 py-6 max-w-6xl mx-auto">
+        <div className="p-6 md:p-10 rounded-3xl relative overflow-hidden shadow-md" style={{ backgroundColor: '#FFF7E5', border: '2px solid #E8D5A8' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            {/* Image side */}
+            <div className="relative h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg" style={{ border: '1px solid #D4C4A0' }}>
+              <Image
+                src="/images/products/box-mini-monster.png"
+                alt="El Box Mini-Monster La Esquina 51"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 500px"
+              />
+            </div>
 
-                {/* Content side */}
-                <div className="space-y-4">
-                  <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold font-mono uppercase" style={{ backgroundColor: 'rgba(169,79,47,0.15)', color: '#A94F2F' }}>
-                    <Flame size={14} /> LO MÁS VIRAL DE SEVILLA
-                  </div>
-                  <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
-                    {hero.name}
-                  </h2>
-                  {hero.description && (
-                    <p className="text-xs md:text-sm" style={{ color: '#65513F' }}>
-                      {hero.description}
-                    </p>
-                  )}
-                  <div className="pt-2 flex items-baseline space-x-3">
-                    <span className="text-3xl md:text-4xl font-bold font-mono" style={{ color: '#A94F2F' }}>{formatPrice(hero.price)}</span>
-                    <span className="text-xs uppercase font-mono tracking-wider" style={{ color: '#65513F' }}>Menú Completo</span>
-                  </div>
-                  <div className="pt-2 flex flex-wrap gap-3">
-                    <Link
-                      href="/menu"
-                      className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-transform active:scale-95 shadow-md"
-                      style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
-                    >
-                      <ShoppingBag size={16} />
-                      <span>PEDIR AHORA</span>
-                    </Link>
-                    <Link
-                      href="/menu"
-                      className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-all"
-                      style={{ backgroundColor: '#F3E8CC', color: '#3A2418', border: '1px solid #D4C4A0', fontFamily: 'Oswald, sans-serif' }}
-                    >
-                      <span>VER MENÚ</span>
-                    </Link>
-                  </div>
-                </div>
+            {/* Content side */}
+            <div className="space-y-4">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold font-mono uppercase" style={{ backgroundColor: 'rgba(169,79,47,0.15)', color: '#A94F2F' }}>
+                <Flame size={14} /> LO MÁS VIRAL DE SEVILLA
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
+                EL BOX MINI-MONSTER
+              </h2>
+              <p className="text-xs md:text-sm" style={{ color: '#65513F' }}>
+                5 mini burguer de ternera premium + ración gigante de patatas fritas crujientes + salsas artesanales de la casa + Coca-Cola bien fría.
+              </p>
+              <div className="pt-2 flex items-baseline space-x-3">
+                <span className="text-3xl md:text-4xl font-bold font-mono" style={{ color: '#A94F2F' }}>{formatPrice(10.50)}</span>
+                <span className="text-xs uppercase font-mono tracking-wider" style={{ color: '#65513F' }}>Menú Completo</span>
+              </div>
+              <div className="pt-2 flex flex-wrap gap-3">
+                <Link
+                  href="/menu"
+                  className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-transform active:scale-95 shadow-md"
+                  style={{ backgroundColor: '#B88727', color: '#FFF7E5', fontFamily: 'Oswald, sans-serif' }}
+                >
+                  <ShoppingBag size={16} />
+                  <span>PEDIR AHORA</span>
+                </Link>
+                <Link
+                  href="/menu"
+                  className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase transition-all"
+                  style={{ backgroundColor: '#F3E8CC', color: '#3A2418', border: '1px solid #D4C4A0', fontFamily: 'Oswald, sans-serif' }}
+                >
+                  <span>VER MENÚ</span>
+                </Link>
               </div>
             </div>
-          </section>
-        );
-      })()}
+          </div>
+        </div>
+      </section>
 
       {/* C. LO MÁS PEDIDO EN LA 51 */}
       <section className="px-4 py-8 max-w-6xl mx-auto space-y-6">
