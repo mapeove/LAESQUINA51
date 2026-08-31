@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     // 1. Get eligible users (profiles)
     const { data: profiles, error: profilesError } = await adminSupabase
       .from('profiles')
-      .select('id, full_name, user_id');
+      .select('id, full_name');
       
     if (profilesError) throw profilesError;
 
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
     // We join the emails
     const eligibleCandidates = profiles.map(p => {
-      const u = authUsers.users.find(authU => authU.id === p.id || authU.id === p.user_id);
+      const u = authUsers.users.find(authU => authU.id === p.id);
       return {
         id: p.id,
         full_name: p.full_name,

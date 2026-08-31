@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Gift, Ticket, Send, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Gift, Ticket, Send, RefreshCw, AlertCircle, CheckCircle2, Copy } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 
 interface Coupon {
@@ -23,7 +23,16 @@ export default function AdminCuponesPage() {
   const [count, setCount] = useState(10);
   const [discountAmount, setDiscountAmount] = useState(5);
   const [daysValid, setDaysValid] = useState(15);
-  const [isDistributing, setIsDistributing] = useState(false);
+  const [mode, setMode] = useState<'distribute' | 'generate'>('distribute');
+  // Helper to copy coupon code to clipboard with feedback
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setMessage({ text: 'Código copiado al portapapeles', type: 'success' });
+    } catch (e) {
+      setMessage({ text: 'Error al copiar', type: 'error' });
+    }
+  };
   
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -47,7 +56,7 @@ export default function AdminCuponesPage() {
 
   const handleDistribute = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsDistributing(true);
+    setIsProcessing(true);
     setMessage({ text: '', type: '' });
 
     try {
@@ -75,7 +84,7 @@ export default function AdminCuponesPage() {
     } catch (err: any) {
       setMessage({ text: err.message, type: 'error' });
     } finally {
-      setIsDistributing(false);
+      setIsProcessing(false);
     }
   };
 
@@ -93,19 +102,86 @@ export default function AdminCuponesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Distribute Form */}
+        {/* Mode Selector */}
+        <div className="mb-4 flex space-x-4">
+          <button type="button" onClick={() => setMode('generate')} className={`px-3 py-1 rounded ${mode === 'generate' ? 'bg-[#A94F2F] text-white' : 'bg-gray-200'}`}>Solo Generar</button>
+          <button type="button" onClick={() => setMode('distribute')} className={`px-3 py-1 rounded ${mode === 'distribute' ? 'bg-[#A94F2F] text-white' : 'bg-gray-200'}`}>Generar y Enviar</button>
+        </div>
+
+        {/* Forms */}
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-white border rounded-2xl p-5 shadow-sm" style={{ borderColor: '#E8D5A8' }}>
-            <h2 className="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
-              <Gift size={20} className="text-[#A94F2F]" />
-              Generar & Enviar Masivo
-            </h2>
-            <p className="text-xs text-gray-500 mb-4">
-              Se seleccionarán aleatoriamente N clientes que <strong>no hayan recibido</strong> un cupón en los últimos 3 meses y se les enviará por correo.
-            </p>
-
-            <form onSubmit={handleDistribute} className="space-y-4">
-              <div>
+            {mode === 'generate' ? (
+              <>
+                <h2 className="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
+                  <Gift size={20} className="text-[#A94F2F]" />
+                  Sólo Generar Cupones
+                </h2>
+                <p className="text-xs text-gray-500 mb-4">Genera códigos de descuento sin enviarlos por email.</p>
+                <form onSubmit={handleGenerate} className="space-y-4">
+                  {/* inputs reuse same state */}
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Cantidad</label>
+                    <input type="number" min="1" max="1000" value={count} onChange={e => setCount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Valor del Descuento (€)</label>
+                    <input type="number" min="1" step="0.5" value={discountAmount} onChange={e => setDiscountAmount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Días de Validez</label>
+                    <input type="number" min="1" max="365" value={daysValid} onChange={e => setDaysValid(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                  </div>
+                  {message.text && (
+                    <div className={`p-3 rounded-lg flex items-start gap-2 text-xs font-medium ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                      {message.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                      <span>{message.text}</span>
+                    </div>
+                  )}
+                  <button type="submit" disabled={isProcessing} className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white" style={{ backgroundColor: '#A94F2F' }}>
+                    {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar</>}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
+                  <Gift size={20} className="text-[#A94F2F]" />
+                  Generar & Enviar Masivo
+                </h2>
+                <p className="text-xs text-gray-500 mb-4">Se seleccionarán aleatoriamente N clientes que <strong>no hayan recibido</strong> un cupón en los últimos 3 meses y se les enviará por correo.</p>
+                <form onSubmit={handleDistribute} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Cantidad de Clientes</label>
+                    <input type="number" min="1" max="1000" value={count} onChange={e => setCount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Valor del Descuento (€)</label>
+                    <input type="number" min="1" step="0.5" value={discountAmount} onChange={e => setDiscountAmount(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Días de Validez</label>
+                    <input type="number" min="1" max="365" value={daysValid} onChange={e => setDaysValid(Number(e.target.value))} className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none" required />
+                  </div>
+                  {message.text && (
+                    <div className={`p-3 rounded-lg flex items-start gap-2 text-xs font-medium ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                      {message.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                      <span>{message.text}</span>
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white"
+                    style={{ backgroundColor: '#A94F2F' }}
+                  >
+                    {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar y Enviar</>}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
                 <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Cantidad de Clientes</label>
                 <input 
                   type="number" 
@@ -146,19 +222,13 @@ export default function AdminCuponesPage() {
               )}
 
               <button
-                type="submit"
-                disabled={isDistributing}
-                className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white"
-                style={{ backgroundColor: '#A94F2F' }}
-              >
-                {isDistributing ? (
-                  <RefreshCw className="animate-spin w-5 h-5" />
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" /> Generar y Enviar
-                  </>
-                )}
-              </button>
+  type="submit"
+  disabled={isProcessing}
+  className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white"
+  style={{ backgroundColor: '#A94F2F' }}
+>
+  {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar y Enviar</>}
+</button>
             </form>
           </div>
         </div>
@@ -186,7 +256,12 @@ export default function AdminCuponesPage() {
                 <tbody className="text-sm">
                   {coupons.map((coupon) => (
                     <tr key={coupon.id} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="p-3 font-mono font-bold text-[#A94F2F]">{coupon.code}</td>
+                      <td className="p-3 font-mono font-bold text-[#A94F2F]">
+                        <span className="cursor-pointer hover:underline" onClick={() => copyToClipboard(coupon.code)} title="Click para copiar">{coupon.code}</span>
+                        <button type="button" className="ml-2 text-gray-500 hover:text-gray-700" onClick={() => copyToClipboard(coupon.code)} title="Copiar">
+                          <Copy size={16} />
+                        </button>
+                      </td>
                       <td className="p-3 font-bold text-right">{formatPrice(coupon.discount_amount)}</td>
                       <td className="p-3 text-xs text-gray-600">
                         {new Date(coupon.expires_at).toLocaleDateString()}
