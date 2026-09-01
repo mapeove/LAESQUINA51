@@ -81,8 +81,8 @@ export default async function HomePage() {
 
           {/* Main Brand Title */}
           <div className="space-y-1">
-            <span className="text-xs md:text-sm font-bold uppercase tracking-[0.3em] font-mono block" style={{ color: '#A94F2F' }}>
-              VENEZUELAN STREET FOOD
+            <span className="text-xs md:text-sm font-bold uppercase tracking-[0.25em] font-mono block" style={{ color: '#A94F2F' }}>
+              SABOR VENEZOLANO EN SEVILLA
             </span>
             <h1 
               className="text-6xl md:text-8xl font-bold tracking-tight uppercase leading-none"
@@ -111,6 +111,32 @@ export default async function HomePage() {
             >
               HACER PEDIDO <ArrowRight size={17} />
             </Link>
+          </div>
+
+          {/* Contacto directo & TikTok en Hero */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1 text-xs font-mono font-bold">
+            <a
+              href="https://wa.me/34604267241?text=Hola%20La%20Esquina%2051%2C%20quisiera%20hacer%20un%20pedido"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border transition-transform hover:scale-105 shadow-sm"
+              style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8', color: '#3A2418' }}
+            >
+              <span>📱</span>
+              <span>+34 604 26 72 41</span>
+            </a>
+            <a
+              href="https://www.tiktok.com/@laesquinaburger51"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border transition-transform hover:scale-105 shadow-sm"
+              style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8', color: '#3A2418' }}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.46V11.8a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-2.47-1.12 4.88 4.88 0 0 1-1.53-2.11z"/>
+              </svg>
+              <span>TikTok: @laesquinaburger51</span>
+            </a>
           </div>
 
           {/* Editorial Real Photography Collage */}
@@ -321,6 +347,48 @@ export default async function HomePage() {
             <ShoppingBag size={18} />
             <span>PEDIR AHORA MISMO</span>
           </Link>
+        </div>
+      </section>
+
+      {/* G. CONTACTO Y REDES SOCIALES */}
+      <section className="px-4 pb-8 max-w-4xl mx-auto">
+        <div className="p-6 md:p-8 rounded-3xl border text-center space-y-4 shadow-sm" style={{ backgroundColor: '#FFF7E5', borderColor: '#E8D5A8' }}>
+          <div className="space-y-1">
+            <span className="text-xs font-mono font-bold uppercase tracking-widest block" style={{ color: '#A94F2F' }}>
+              ATENCIÓN AL CLIENTE Y PEDIDOS
+            </span>
+            <h3 className="text-3xl md:text-4xl font-bold uppercase tracking-wide" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}>
+              LA ESQUINA 51
+            </h3>
+            <p className="text-xs font-bold font-mono uppercase tracking-wider" style={{ color: '#B88727' }}>
+              Sabor venezolano en Sevilla
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <a
+              href="https://wa.me/34604267241?text=Hola%20La%20Esquina%2051%2C%20quisiera%20hacer%20un%20pedido"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border text-xs font-mono font-bold transition-transform hover:scale-105 shadow-sm"
+              style={{ backgroundColor: '#F3E8CC', borderColor: '#D4C4A0', color: '#3A2418' }}
+            >
+              <span>📱</span>
+              <span>+34 604 26 72 41</span>
+            </a>
+            <a
+              href="https://www.tiktok.com/@laesquinaburger51"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border text-xs font-mono font-bold transition-transform hover:scale-105 shadow-sm"
+              style={{ backgroundColor: '#F3E8CC', borderColor: '#D4C4A0', color: '#3A2418' }}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.46V11.8a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-2.47-1.12 4.88 4.88 0 0 1-1.53-2.11z"/>
+              </svg>
+              <span>Síguenos en TikTok: @laesquinaburger51</span>
+            </a>
+          </div>
         </div>
       </section>
     </main>

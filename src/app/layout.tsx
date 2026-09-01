@@ -12,8 +12,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'La Esquina 51 | Venezuelan Street Food en Sevilla',
-  description: 'Comida callejera venezolana y fusión latina en Sevilla. Hamburguesas, perros, shawarma, empanadas y boxes. Pedidos viernes, sábados y domingos.',
+  title: 'La Esquina 51 | Sabor Venezolano en Sevilla',
+  description: 'Comida venezolana y hamburguesas en Sevilla. Hamburguesas, perros, shawarma, empanadas y boxes. Pedidos viernes, sábados y domingos.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
     title: 'La Esquina 51',
   },
   openGraph: {
-    title: 'La Esquina 51 | Venezuelan Street Food en Sevilla',
-    description: 'Comida callejera venezolana y fusión latina en Sevilla. Hamburguesas, perros, shawarma, empanadas y boxes. Pedidos viernes, sábados y domingos.',
+    title: 'La Esquina 51 | Sabor Venezolano en Sevilla',
+    description: 'Comida venezolana y hamburguesas en Sevilla. Hamburguesas, perros, shawarma, empanadas y boxes. Pedidos viernes, sábados y domingos.',
     url: 'https://laesquina51.es',
     siteName: 'La Esquina 51',
     locale: 'es_ES',
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'La Esquina 51 | Venezuelan Street Food',
-    description: 'Comida callejera venezolana y fusión latina en Sevilla.',
+    title: 'La Esquina 51 | Sabor Venezolano en Sevilla',
+    description: 'Comida venezolana y hamburguesas en Sevilla.',
   },
 };
 

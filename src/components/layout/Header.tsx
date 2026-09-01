@@ -30,7 +30,7 @@ export function Header() {
                 LA ESQUINA 51
               </span>
               <span className="block text-[8px] font-mono tracking-widest uppercase font-bold" style={{ color: '#A94F2F' }}>
-                Street Food Venezuelan
+                Sabor Venezolano en Sevilla
               </span>
             </div>
           </Link>

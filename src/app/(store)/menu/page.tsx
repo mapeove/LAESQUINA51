@@ -54,7 +54,7 @@ const FALLBACK_PRODUCTS: Product[] = [
 ];
 
 export const metadata = {
-  title: 'Menú | La Esquina 51 – Venezuelan Street Food en Sevilla',
+  title: 'Menú | La Esquina 51 – Sabor Venezolano en Sevilla',
   description: 'Hamburguesas, boxes, perros calientes, shawarma y empanadas venezolanas. Pide ahora tu delivery.',
 };
 
@@ -93,7 +93,7 @@ export default async function MenuPage() {
           NUESTRO MENÚ
         </h1>
         <p className="text-xs font-mono tracking-wider font-bold uppercase" style={{ color: '#A94F2F' }}>
-          Venezuelan Street Food · Sevilla
+          Sabor Venezolano en Sevilla
         </p>
       </div>
       <MenuClient categories={categories} products={products} />
