@@ -6,7 +6,7 @@ import { Save, ShieldCheck, PhoneCall, Wallet } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const [storeOpen, setStoreOpen] = useState(true);
-  const [whatsappNumber, setWhatsappNumber] = useState('633184354');
+  const [whatsappNumber, setWhatsappNumber] = useState('604267241');
   const [bizumPhone, setBizumPhone] = useState('633184354');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -111,7 +111,7 @@ export default function AdminSettingsPage() {
               onChange={(e) => setWhatsappNumber(e.target.value)}
               className="w-full max-w-sm p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white font-mono text-sm focus:outline-none focus:border-yellow-500"
             />
-            <p className="text-[10px] text-neutral-500 mt-1">Formato español sin espacios (ej: 633184354)</p>
+            <p className="text-[10px] text-neutral-500 mt-1">Formato español sin espacios (ej: 604267241)</p>
           </div>
         </div>
 

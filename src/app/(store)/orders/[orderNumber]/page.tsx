@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, getWhatsAppUrl } from '@/lib/utils';
 import { WHATSAPP_NUMBER } from '@/lib/constants';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -53,7 +53,7 @@ export default async function OrderConfirmationPage({
   }
 
   const message = `Hola, acabo de realizar el pedido ${orderNumber}`;
-  const whatsappUrl = `https://wa.me/34${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  const whatsappUrl = getWhatsAppUrl(WHATSAPP_NUMBER, message);
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-2xl text-center min-h-screen" style={{ backgroundColor: '#F3E8CC' }}>

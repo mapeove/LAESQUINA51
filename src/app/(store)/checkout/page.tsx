@@ -53,7 +53,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const [bizumPhone, setBizumPhone] = useState('34604267241');
+  const [bizumPhone, setBizumPhone] = useState('+34 633 18 43 54');
   const [userId, setUserId] = useState<string | null>(null);
   
   // Delivery Zones Configured in Admin
