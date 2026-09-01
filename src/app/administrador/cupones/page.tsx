@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Gift, Ticket, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, Trash2, Ban, CheckCircle } from 'lucide-react';
+import { Gift, Ticket, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, Trash2, Ban, CheckCircle, Mail } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 
 interface Coupon {
@@ -23,7 +23,8 @@ export default function AdminCuponesPage() {
   const [count, setCount] = useState(10);
   const [discountAmount, setDiscountAmount] = useState(5);
   const [daysValid, setDaysValid] = useState(15);
-  const [mode, setMode] = useState<'distribute' | 'generate'>('distribute');
+  const [specificEmails, setSpecificEmails] = useState('');
+  const [mode, setMode] = useState<'distribute' | 'generate' | 'specific'>('distribute');
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Helper to copy coupon code to clipboard with feedback
@@ -125,6 +126,51 @@ export default function AdminCuponesPage() {
     }
   };
 
+  const handleSpecificSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setMessage({ text: '', type: '' });
+
+    try {
+      const emailsList = specificEmails
+        .split(/[\n,;]+/)
+        .map((email) => email.trim())
+        .filter(Boolean);
+
+      if (emailsList.length === 0) {
+        throw new Error('Por favor, ingresa al menos un correo electrónico');
+      }
+
+      const res = await fetch('/api/admin/distribute-coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetEmails: emailsList,
+          discount_amount: discountAmount,
+          days_valid: daysValid
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al enviar cupones a destinatarios');
+      }
+
+      setMessage({
+        text: `¡Éxito! Se generaron y enviaron ${data.sentCount} cupones a los destinatarios especificados.`,
+        type: 'success'
+      });
+      setSpecificEmails('');
+      fetchCoupons();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al procesar';
+      setMessage({ text: msg, type: 'error' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleDeleteCoupon = async (id: string, code: string) => {
     if (!window.confirm(`¿Estás seguro de que deseas eliminar permanentemente el cupón ${code}?`)) return;
     try {
@@ -177,22 +223,24 @@ export default function AdminCuponesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Mode Selector */}
+        {/* Mode Selector & Form */}
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-white border rounded-2xl p-5 shadow-sm space-y-4" style={{ borderColor: '#E8D5A8' }}>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">Modo</label>
               <select
                 value={mode}
-                onChange={(e) => setMode(e.target.value as 'distribute' | 'generate')}
+                onChange={(e) => setMode(e.target.value as 'distribute' | 'generate' | 'specific')}
                 className="w-full p-2.5 border rounded-xl bg-gray-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#A94F2F]"
               >
-                <option value="distribute">Generar y enviar por correo masivo</option>
                 <option value="generate">Generar para compartir (WhatsApp / Amigos / Familia)</option>
+                <option value="distribute">Generar y enviar por correo masivo</option>
+                <option value="specific">Enviar a correos específicos</option>
               </select>
             </div>
 
-            {mode === 'generate' ? (
+            {/* MODO 1: Generar para compartir */}
+            {mode === 'generate' && (
               <>
                 <h2 className="text-lg font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
                   <Ticket className="w-5 h-5 text-[#A94F2F]" />
@@ -218,12 +266,15 @@ export default function AdminCuponesPage() {
                       <span>{message.text}</span>
                     </div>
                   )}
-                  <button type="submit" disabled={isProcessing} className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white" style={{ backgroundColor: '#A94F2F' }}>
+                  <button type="submit" disabled={isProcessing} className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white shadow-sm" style={{ backgroundColor: '#A94F2F' }}>
                     {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Ticket className="w-5 h-5" /> Generar Cupones</>}
                   </button>
                 </form>
               </>
-            ) : (
+            )}
+
+            {/* MODO 2: Generar y enviar masivo */}
+            {mode === 'distribute' && (
               <>
                 <h2 className="text-lg font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
                   <Gift className="w-5 h-5 text-[#A94F2F]" />
@@ -249,12 +300,79 @@ export default function AdminCuponesPage() {
                       <span>{message.text}</span>
                     </div>
                   )}
-                  <button type="submit" disabled={isProcessing} className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white" style={{ backgroundColor: '#A94F2F' }}>
-                    {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar y Enviar</>}
+                  <button type="submit" disabled={isProcessing} className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white shadow-sm" style={{ backgroundColor: '#A94F2F' }}>
+                    {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar y Enviar Masivo</>}
                   </button>
                 </form>
               </>
             )}
+
+            {/* MODO 3: Enviar a correos específicos */}
+            {mode === 'specific' && (
+              <>
+                <h2 className="text-lg font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Oswald, sans-serif' }}>
+                  <Mail className="w-5 h-5 text-[#A94F2F]" />
+                  Enviar a Correos Específicos
+                </h2>
+                <p className="text-xs text-gray-500 mb-4">
+                  Escribe uno o varios correos electrónicos. Se generará un cupón único y se enviará por email a cada destinatario.
+                </p>
+                <form onSubmit={handleSpecificSend} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">
+                      Correos Electrónicos (separados por coma o salto de línea)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={specificEmails}
+                      onChange={(e) => setSpecificEmails(e.target.value)}
+                      placeholder="cliente1@gmail.com, cliente2@gmail.com"
+                      className="w-full p-2.5 border rounded-lg bg-gray-50 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#A94F2F]"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Valor del Descuento (€)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.5"
+                      value={discountAmount}
+                      onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                      className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-700">Días de Validez</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={daysValid}
+                      onChange={(e) => setDaysValid(Number(e.target.value))}
+                      className="w-full p-2 border rounded-lg bg-gray-50 focus:outline-none"
+                      required
+                    />
+                  </div>
+                  {message.text && (
+                    <div className={`p-3 rounded-lg flex items-start gap-2 text-xs font-medium ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                      {message.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                      <span>{message.text}</span>
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider disabled:opacity-50 transition-all text-white shadow-sm"
+                    style={{ backgroundColor: '#A94F2F' }}
+                  >
+                    {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <><Send className="w-5 h-5" /> Generar y Enviar a Destinatarios</>}
+                  </button>
+                </form>
+              </>
+            )}
+
           </div>
         </div>
 

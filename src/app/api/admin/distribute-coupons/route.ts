@@ -4,10 +4,11 @@ import { sendCouponEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
-    const { count, discount_amount, days_valid } = await request.json();
+    const body = await request.json();
+    const { count, discount_amount, days_valid, targetEmails } = body;
     
-    if (!count || !discount_amount || !days_valid) {
-      return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
+    if (!discount_amount || !days_valid) {
+      return NextResponse.json({ error: 'Faltan parámetros requeridos (descuento o días de validez)' }, { status: 400 });
     }
 
     const adminSupabase = await createAdminClient();
@@ -30,19 +31,104 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    // 1. Get eligible auth users directly (ignore profiles)
-    const { data: authList, error: usersError } = await adminSupabase.auth.admin.listUsers();
-    if (usersError) throw usersError;
-    // Ensure email is present
-    const eligibleAuthUsers = authList.users.filter(u => u.email);
-    // Map to required shape (id, full_name, email)
-    const eligibleCandidates = eligibleAuthUsers.map(u => ({
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + Number(days_valid));
+
+    // Get auth users list for matching name / id if available
+    const { data: authList } = await adminSupabase.auth.admin.listUsers();
+    const authUsers = authList?.users || [];
+
+    // MODO 1: Enviar a correos específicos (manuales)
+    if (targetEmails !== undefined) {
+      let rawList: string[] = [];
+      if (Array.isArray(targetEmails)) {
+        rawList = targetEmails;
+      } else if (typeof targetEmails === 'string') {
+        rawList = targetEmails.split(/[\n,;]+/).map((e: string) => e.trim());
+      }
+
+      // Limpiar y validar cada correo electrónico
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const validEmails = Array.from(
+        new Set(
+          rawList
+            .map((e: string) => e.trim().toLowerCase())
+            .filter((e: string) => e && emailRegex.test(e))
+        )
+      );
+
+      if (validEmails.length === 0) {
+        return NextResponse.json({ error: 'No se encontraron correos electrónicos válidos en la lista' }, { status: 400 });
+      }
+
+      let sentCount = 0;
+      const createdCoupons = [];
+
+      for (const email of validEmails) {
+        const code = 'ESQ51-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        const { data: coupon, error: couponError } = await adminSupabase
+          .from('coupons')
+          .insert({
+            code,
+            discount_amount: Number(discount_amount),
+            expires_at: expiresAt.toISOString(),
+            used: false
+          })
+          .select()
+          .single();
+          
+        if (couponError || !coupon) {
+          console.error('Error creating coupon for specific email:', couponError);
+          continue;
+        }
+
+        createdCoupons.push(coupon);
+
+        const matchedAuth = authUsers.find((u) => u.email?.toLowerCase() === email);
+        const fullName = (matchedAuth?.user_metadata && (matchedAuth.user_metadata.full_name || matchedAuth.user_metadata.name)) || 'Amigo';
+
+        try {
+          await sendCouponEmail({
+            email,
+            fullName,
+            couponCode: code,
+            discountAmount: Number(discount_amount),
+            expiresAt: expiresAt.toISOString()
+          });
+
+          await adminSupabase.from('coupon_distribution_history').insert({
+            coupon_id: coupon.id,
+            user_id: matchedAuth?.id ?? null,
+            email
+          });
+
+          sentCount++;
+        } catch (mailErr) {
+          console.error('Failed to send coupon email to:', email, mailErr);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        sentCount,
+        totalRequested: validEmails.length,
+        coupons: createdCoupons
+      });
+    }
+
+    // MODO 2: Distribución masiva aleatoria (clientes sin cupones en 3 meses)
+    if (!count) {
+      return NextResponse.json({ error: 'Falta la cantidad de clientes a distribuir' }, { status: 400 });
+    }
+
+    const eligibleAuthUsers = authUsers.filter((u) => u.email);
+    const eligibleCandidates = eligibleAuthUsers.map((u) => ({
       id: u.id,
-      full_name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || '',
+      full_name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || 'Amigo',
       email: u.email!
     }));
 
-    // 2. Filter users who got a coupon in last 3 months
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
@@ -51,54 +137,49 @@ export async function POST(request: Request) {
       .select('user_id')
       .gt('sent_at', threeMonthsAgo.toISOString());
 
-    const excludedUserIds = new Set(history?.map(h => h.user_id) || []);
-
-    const finalCandidates = eligibleCandidates.filter(c => !excludedUserIds.has(c.id));
+    const excludedUserIds = new Set(history?.map((h) => h.user_id) || []);
+    const finalCandidates = eligibleCandidates.filter((c) => !excludedUserIds.has(c.id));
 
     if (finalCandidates.length === 0) {
-      return NextResponse.json({ error: 'No hay usuarios elegibles para recibir cupones' }, { status: 400 });
+      return NextResponse.json({ error: 'No hay usuarios elegibles para recibir cupones (todos han recibido en los últimos 3 meses)' }, { status: 400 });
     }
 
-    // Pick random users
     const shuffled = finalCandidates.sort(() => 0.5 - Math.random());
-    const selectedUsers = shuffled.slice(0, Math.min(count, shuffled.length));
-
-    // Generate Expiry
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + days_valid);
+    const selectedUsers = shuffled.slice(0, Math.min(Number(count), shuffled.length));
 
     let sentCount = 0;
+    const createdCoupons = [];
 
     for (const u of selectedUsers) {
-      // Create coupon code
       const code = 'ESQ51-' + Math.random().toString(36).substring(2, 8).toUpperCase();
       
       const { data: coupon, error: couponError } = await adminSupabase
         .from('coupons')
         .insert({
           code,
-          discount_amount,
-          expires_at: expiresAt.toISOString()
+          discount_amount: Number(discount_amount),
+          expires_at: expiresAt.toISOString(),
+          used: false
         })
         .select()
         .single();
         
-      if (couponError) {
+      if (couponError || !coupon) {
         console.error('Error creating coupon:', couponError);
         continue;
       }
 
-      // Send Email
+      createdCoupons.push(coupon);
+
       try {
         await sendCouponEmail({
-          email: u.email!,
+          email: u.email,
           fullName: u.full_name || 'Amigo',
           couponCode: code,
-          discountAmount: discount_amount,
+          discountAmount: Number(discount_amount),
           expiresAt: expiresAt.toISOString()
         });
 
-        // Log history
         await adminSupabase.from('coupon_distribution_history').insert({
           coupon_id: coupon.id,
           user_id: u.id,
@@ -111,10 +192,16 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, sentCount, totalRequested: count });
+    return NextResponse.json({
+      success: true,
+      sentCount,
+      totalRequested: Number(count),
+      coupons: createdCoupons
+    });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Distribution error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const msg = error instanceof Error ? error.message : 'Error desconocido';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
