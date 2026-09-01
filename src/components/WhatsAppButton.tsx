@@ -2,11 +2,10 @@
 
 import React from 'react';
 import { getWhatsAppUrl } from '@/lib/utils';
-import { WHATSAPP_NUMBER } from '@/lib/constants';
 import { MessageCircle } from 'lucide-react';
 
 export function WhatsAppButton() {
-  const url = getWhatsAppUrl(WHATSAPP_NUMBER, '¡Hola! 🍔 Me gustaría hacer un pedido.');
+  const url = getWhatsAppUrl('34604267241', '¡Hola! 🍔 Me gustaría hacer un pedido.');
 
   return (
     <a
