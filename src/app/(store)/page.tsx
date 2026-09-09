@@ -391,6 +391,26 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* H. JSON-LD PARA SEO LOCAL */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Restaurant",
+            "name": "La Esquina 51",
+            "image": "https://www.laesquina51.es/images/products/la-casi-triple.jpg",
+            "url": "https://www.laesquina51.es",
+            "telephone": "+34 604 26 72 41",
+            "servesCuisine": "Venezolana",
+            "areaServed": "Sevilla",
+            "sameAs": [
+              "https://www.tiktok.com/@laesquinaburger51"
+            ]
+          })
+        }}
+      />
     </main>
   );
 }

@@ -30,7 +30,7 @@ export async function sendWelcomeEmail({
   fullName?: string;
 }) {
   const name = fullName ? fullName.trim() : 'Amigo/a';
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://laesquina51.es';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.laesquina51.es';
   
   // Look for logo file to attach as inline CID
   const logoPath = path.join(process.cwd(), 'public', 'images', 'logo-esquina51.jpg');
@@ -71,7 +71,7 @@ export async function sendWelcomeEmail({
                 LA ESQUINA 51
               </h1>
               <p class="notranslate" translate="no" style="color: #B88727; font-size: 12px; margin: 5px 0 0 0; letter-spacing: 3px; text-transform: uppercase; font-weight: 600;">
-                STREET FOOD CON ALMA
+                SABOR VENEZOLANO EN SEVILLA
               </p>
             </td>
           </tr>

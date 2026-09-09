@@ -90,7 +90,7 @@ export default async function MenuPage() {
           className="text-4xl font-bold tracking-wide mb-1 uppercase"
           style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#3A2418' }}
         >
-          NUESTRO MENÚ
+          MENÚ - LA ESQUINA 51
         </h1>
         <p className="text-xs font-mono tracking-wider font-bold uppercase" style={{ color: '#A94F2F' }}>
           Sabor Venezolano en Sevilla

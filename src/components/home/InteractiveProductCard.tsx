@@ -25,7 +25,7 @@ export function InteractiveProductCard({ product, variant = 'featured' }: Intera
         >
           <Image
             src={prodImg}
-            alt={product.name}
+            alt={`${product.name} de La Esquina 51`}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 768px) 50vw, 25vw"
@@ -59,7 +59,7 @@ export function InteractiveProductCard({ product, variant = 'featured' }: Intera
         <div className="relative w-full h-48 flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#F3E8CC' }}>
           <Image
             src={prodImg}
-            alt={product.name}
+            alt={`${product.name} de La Esquina 51`}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 768px) 100vw, 300px"

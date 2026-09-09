@@ -12,8 +12,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'La Esquina 51 | Sabor Venezolano en Sevilla',
-  description: 'Comida venezolana y hamburguesas en Sevilla. Hamburguesas, perros, shawarma, empanadas y boxes. Pedidos viernes, sábados y domingos.',
+  metadataBase: new URL('https://www.laesquina51.es'),
+  title: 'La Esquina 51 | Comida Venezolana en Sevilla',
+  description: 'Descubre La Esquina 51: auténtica comida venezolana en Sevilla. Disfruta de nuestras hamburguesas virales, perros calientes, empanadas y boxes. ¡Pide online!',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
@@ -21,17 +22,17 @@ export const metadata: Metadata = {
     title: 'La Esquina 51',
   },
   openGraph: {
-    title: 'La Esquina 51 | Sabor Venezolano en Sevilla',
-    description: 'Comida venezolana y hamburguesas en Sevilla. Hamburguesas, perros, shawarma, empanadas y boxes. Pedidos viernes, sábados y domingos.',
-    url: 'https://laesquina51.es',
+    title: 'La Esquina 51 | Comida Venezolana en Sevilla',
+    description: 'Descubre La Esquina 51: auténtica comida venezolana en Sevilla. Disfruta de nuestras hamburguesas virales, perros calientes, empanadas y boxes. ¡Pide online!',
+    url: 'https://www.laesquina51.es',
     siteName: 'La Esquina 51',
     locale: 'es_ES',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'La Esquina 51 | Sabor Venezolano en Sevilla',
-    description: 'Comida venezolana y hamburguesas en Sevilla.',
+    title: 'La Esquina 51 | Comida Venezolana en Sevilla',
+    description: 'Auténtica comida venezolana y hamburguesas en Sevilla.',
   },
 };
 
