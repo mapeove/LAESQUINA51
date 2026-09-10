@@ -8,6 +8,18 @@ import { Banknote, Wallet, ArrowLeft, ShieldCheck, UserCircle, Tag } from 'lucid
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { DeliveryZone } from '@/types';
+import {
+  COSTE_INTERNO_KM,
+  COSTE_BASE_ENVIO,
+  COSTE_VARIABLE_KM,
+  ENVIO_MINIMO,
+  DISTANCIA_CALCULO_INICIAL,
+  DISTANCIA_PEDIDO_MINIMO_1,
+  DISTANCIA_PEDIDO_MINIMO_2,
+  DISTANCIA_MAXIMA,
+  PEDIDO_MINIMO_1,
+  PEDIDO_MINIMO_2,
+} from '@/lib/constants';
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
@@ -196,19 +208,7 @@ export default function CheckoutPage() {
   const discountValue = appliedCoupon ? Number(Number(appliedCoupon.discount_amount).toFixed(2)) : 0;
   const total = Number(Math.max(0, subtotalValue + DELIVERY_FEE - discountValue).toFixed(2));
 
-// Added imports
-import {
-  COSTE_INTERNO_KM,
-  COSTE_BASE_ENVIO,
-  COSTE_VARIABLE_KM,
-  ENVIO_MINIMO,
-  DISTANCIA_CALCULO_INICIAL,
-  DISTANCIA_PEDIDO_MINIMO_1,
-  DISTANCIA_PEDIDO_MINIMO_2,
-  DISTANCIA_MAXIMA,
-  PEDIDO_MINIMO_1,
-  PEDIDO_MINIMO_2,
-} from '@/lib/constants';
+
 
 // Helper functions for geocoding and routing using public APIs
 async function geocode(address: string) {
@@ -309,48 +309,6 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 };
 
-    e.preventDefault();
-    setError('');
-
-    if (!formData.customer_name || !formData.customer_phone || !formData.delivery_address) {
-      setError('Por favor, completa todos los campos requeridos (*)');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const payload = {
-        ...formData,
-        user_id: userId,
-        items,
-        subtotal: subtotalValue,
-        coupon_code: appliedCoupon?.code,
-        delivery_fee: DELIVERY_FEE,
-        total,
-        cash_change_for: formData.payment_method === 'CASH' && formData.cash_change_for ? parseFloat(formData.cash_change_for) : null,
-      };
-
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al procesar el pedido');
-      }
-
-      clearCart();
-      router.push(`/mi-cuenta`);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Ha ocurrido un error inesperado';
-      setError(message);
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="px-4 py-8 max-w-2xl mx-auto animate-fade-up min-h-screen" style={{ backgroundColor: '#F3E8CC' }}>
