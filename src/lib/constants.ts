@@ -5,7 +5,17 @@
 export const APP_NAME = 'La Esquina 51'
 export const APP_TAGLINE = 'Sabor Venezolano en Sevilla'
 export const APP_SLOGAN = 'Sabor de calle. Sabor de casa.'
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.laesquina51.es'
+export const COSTE_INTERNO_KM = 0.45;
+export const COSTE_BASE_ENVIO = 1.5;
+export const COSTE_VARIABLE_KM = 0.35;
+export const ENVIO_MINIMO = 2.0;
+export const DISTANCIA_CALCULO_INICIAL = 8;
+export const DISTANCIA_PEDIDO_MINIMO_1 = 10;
+export const DISTANCIA_PEDIDO_MINIMO_2 = 12;
+export const DISTANCIA_MAXIMA = 15;
+export const PEDIDO_MINIMO_1 = 22;
+export const PEDIDO_MINIMO_2 = 25;
+
 export const WHATSAPP_NUMBER = '604267241'
 export const BIZUM_PHONE = process.env.NEXT_PUBLIC_BIZUM_PHONE ?? '633184354'
 

@@ -196,7 +196,119 @@ export default function CheckoutPage() {
   const discountValue = appliedCoupon ? Number(Number(appliedCoupon.discount_amount).toFixed(2)) : 0;
   const total = Number(Math.max(0, subtotalValue + DELIVERY_FEE - discountValue).toFixed(2));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+// Added imports
+import {
+  COSTE_INTERNO_KM,
+  COSTE_BASE_ENVIO,
+  COSTE_VARIABLE_KM,
+  ENVIO_MINIMO,
+  DISTANCIA_CALCULO_INICIAL,
+  DISTANCIA_PEDIDO_MINIMO_1,
+  DISTANCIA_PEDIDO_MINIMO_2,
+  DISTANCIA_MAXIMA,
+  PEDIDO_MINIMO_1,
+  PEDIDO_MINIMO_2,
+} from '@/lib/constants';
+
+// Helper functions for geocoding and routing using public APIs
+async function geocode(address: string) {
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+  const data = await res.json();
+  if (!data[0]) throw new Error('No coordinates found for address');
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+}
+
+async function getRouteDistanceKm(origin: string, destination: string) {
+  const o = await geocode(origin);
+  const d = await geocode(destination);
+  const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${o.lon},${o.lat};${d.lon},${d.lat}?overview=false`);
+  const json = await res.json();
+  if (json.code !== 'Ok') throw new Error('Routing error');
+  const meters = json.routes[0].distance;
+  return meters / 1000;
+}
+
+const ORIGIN_ADDRESS = 'Avenida Veintiocho de Febrero 7, Sevilla';
+
+// Inside handleSubmit, replace fee calculation
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+
+  if (!formData.customer_name || !formData.customer_phone || !formData.delivery_address) {
+    setError('Por favor, completa todos los campos requeridos (*)');
+    return;
+  }
+
+  setLoading(true);
+  try {
+    // Determine if postal code belongs to a fixed delivery zone
+    const matchingZone = deliveryZones.find(z => z.postal_codes?.includes(formData.delivery_postal_code));
+    let computedDeliveryFee = 0;
+    let computedMinOrder = 0;
+    if (matchingZone) {
+      // Fixed zone: keep existing fee and min order
+      computedDeliveryFee = matchingZone.delivery_fee ?? 0;
+      computedMinOrder = matchingZone.min_order ?? 0;
+    } else {
+      // Dynamic calculation for out‑of‑zone addresses
+      const distanceKm = await getRouteDistanceKm(ORIGIN_ADDRESS, formData.delivery_address);
+      if (distanceKm <= DISTANCIA_CALCULO_INICIAL) {
+        // Keep current behaviour (no delivery available)
+        setError('Dirección fuera del área de reparto (≤8 km)');
+        setLoading(false);
+        return;
+      }
+      if (distanceKm > DISTANCIA_MAXIMA) {
+        setError('Dirección fuera del área de reparto (>15 km)');
+        setLoading(false);
+        return;
+      }
+      // Apply dynamic fee formula
+      const fee = COSTE_BASE_ENVIO + distanceKm * COSTE_VARIABLE_KM;
+      computedDeliveryFee = Math.max(fee, ENVIO_MINIMO);
+      // Determine minimum order based on distance thresholds
+      if (distanceKm > DISTANCIA_PEDIDO_MINIMO_1 && distanceKm <= DISTANCIA_PEDIDO_MINIMO_2) {
+        computedMinOrder = PEDIDO_MINIMO_1;
+      } else if (distanceKm > DISTANCIA_PEDIDO_MINIMO_2 && distanceKm <= DISTANCIA_MAXIMA) {
+        computedMinOrder = PEDIDO_MINIMO_2;
+      } else {
+        computedMinOrder = 0;
+      }
+    }
+
+    const payload = {
+      ...formData,
+      user_id: userId,
+      items,
+      subtotal: subtotalValue,
+      coupon_code: appliedCoupon?.code,
+      delivery_fee: computedDeliveryFee,
+      total,
+      min_order: computedMinOrder,
+      cash_change_for: formData.payment_method === 'CASH' && formData.cash_change_for ? parseFloat(formData.cash_change_for) : null,
+    };
+
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Error al procesar el pedido');
+    }
+
+    clearCart();
+    router.push(`/mi-cuenta`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Ha ocurrido un error inesperado';
+    setError(message);
+    setLoading(false);
+  }
+};
+
     e.preventDefault();
     setError('');
 
