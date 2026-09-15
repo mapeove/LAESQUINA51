@@ -75,7 +75,7 @@ export default function RepartidorClient({ initialOrders, driver, currentUserId 
                   <p className="mt-1">{fullAddress}</p>
                 </div>
                 <button 
-                  onClick={() => openGoogleMaps(fullAddress)}
+                  onClick={() => openGoogleMaps(order.delivery_address)}
                   className="bg-[#FFF7E5] border border-[#E8D5A8] text-[#A94F2F] p-3 rounded-xl ml-2 shadow-sm flex items-center justify-center flex-col gap-1 active:bg-[#F3E8CC]"
                 >
                   <Navigation size={18} />
