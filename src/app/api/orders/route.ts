@@ -132,16 +132,6 @@ export async function POST(request: Request) {
     };
     const orderNumber = generateOrderNumber();
 
-    const fullAddress = [
-      delivery_address,
-      delivery_floor ? `Piso ${delivery_floor}` : null,
-      delivery_door ? `Puerta ${delivery_door}` : null,
-      delivery_postal_code,
-      zoneData.name, // Secure name from DB
-    ]
-      .filter(Boolean)
-      .join(', ');
-
     // Standard order insertion without non-existent columns
     const { data: orderData, error: orderError } = await adminSupabase
       .from('orders')
@@ -152,7 +142,7 @@ export async function POST(request: Request) {
         customer_phone: cleanPhone,
         customer_email: customer_email ?? null,
         user_id: body.user_id ?? null,
-        delivery_address: fullAddress,
+        delivery_address: delivery_address,
         delivery_floor: delivery_floor ?? null,
         delivery_door: delivery_door ?? null,
         delivery_zone_id: zone_id,

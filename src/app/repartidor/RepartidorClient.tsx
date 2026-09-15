@@ -54,8 +54,13 @@ export default function RepartidorClient({ initialOrders, driver, currentUserId 
   return (
     <div className="space-y-6 pb-20">
       {activeOrders.map(order => {
-        const fullAddress = `${order.delivery_address}${order.delivery_floor ? `, Piso: ${order.delivery_floor}` : ''}${order.delivery_door ? `, Puerta: ${order.delivery_door}` : ''}`;
-        
+        const displayParts = [
+          order.delivery_address,
+          order.delivery_floor  ? `Piso: ${order.delivery_floor}`  : null,
+          order.delivery_door   ? `Puerta: ${order.delivery_door}` : null,
+          order.delivery_zone_name ?? null,
+        ].filter(Boolean).join(' · ');
+
         return (
           <div key={order.id} className="bg-white border border-[#E8D5A8] rounded-2xl overflow-hidden shadow-sm">
             <div className="p-4 bg-[#F3E8CC] border-b border-[#E8D5A8] flex justify-between items-center">
@@ -72,7 +77,7 @@ export default function RepartidorClient({ initialOrders, driver, currentUserId 
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <p className="font-medium flex items-center gap-1"><MapPin size={14} className="text-[#A94F2F]" /> Dirección:</p>
-                  <p className="mt-1">{fullAddress}</p>
+                  <p className="mt-1">{displayParts}</p>
                 </div>
                 <button 
                   onClick={() => openGoogleMaps(order.delivery_address)}
