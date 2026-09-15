@@ -11,24 +11,62 @@ export default function RepartidorClient({ initialOrders, driver, currentUserId 
   const supabase = createClient();
 
   useEffect(() => {
-    const channel = supabase.channel('repartidor-orders')
+    const driverId = driver.id;
+
+    // Canal 1: captura INSERT y DELETE de pedidos ya asignados a este repartidor.
+    const channelOwn = supabase
+      .channel(`repartidor-own-${driverId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders', filter: `driver_id=eq.${driver.id}` },
+        { event: 'INSERT', schema: 'public', table: 'orders', filter: `driver_id=eq.${driverId}` },
         (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setOrders(prev => [payload.new as Order, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setOrders(prev => prev.map(o => o.id === payload.new.id ? (payload.new as Order) : o));
-          } else if (payload.eventType === 'DELETE') {
-            setOrders(prev => prev.filter(o => o.id !== payload.old.id));
+          setOrders(prev => {
+            if (prev.some(o => o.id === (payload.new as Order).id)) return prev;
+            return [payload.new as Order, ...prev];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'orders', filter: `driver_id=eq.${driverId}` },
+        (payload) => {
+          setOrders(prev => prev.filter(o => o.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    // Canal 2: captura TODOS los UPDATE de orders sin filtro de columna para detectar
+    // asignaciones nuevas (driver_id: null → driverId) y desasignaciones.
+    // Supabase Realtime evalúa el filtro contra el estado ANTERIOR del registro,
+    // por lo que driver_id=eq.X nunca dispara cuando el pedido acaba de ser asignado.
+    const channelUpdates = supabase
+      .channel(`repartidor-updates-${driverId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => {
+          const updated = payload.new as Order;
+          const wasAssigned = (payload.old as Partial<Order>).driver_id === driverId;
+          const isAssigned = updated.driver_id === driverId;
+
+          if (isAssigned) {
+            // Asignado (nuevo o actualización): añadir o reemplazar
+            setOrders(prev => {
+              const exists = prev.some(o => o.id === updated.id);
+              if (exists) return prev.map(o => o.id === updated.id ? updated : o);
+              return [updated, ...prev];
+            });
+          } else if (wasAssigned && !isAssigned) {
+            // Desasignado de este repartidor: eliminar de la lista
+            setOrders(prev => prev.filter(o => o.id !== updated.id));
           }
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channelOwn);
+      supabase.removeChannel(channelUpdates);
     };
   }, [driver.id, supabase]);
 
