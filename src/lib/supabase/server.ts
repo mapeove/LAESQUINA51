@@ -3,13 +3,18 @@ import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js
 import { cookies } from 'next/headers';
 
 const FALLBACK_URL = 'https://placeholder.supabase.co';
-const FALLBACK_KEY = 'placeholder-key';
 
 export async function createClient() {
   const cookieStore = await cookies();
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!anonKey) {
+    throw new Error(
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY is not set in environment variables.'
+    );
+  }
 
   return createServerClient(url, anonKey, {
     cookies: {
@@ -31,7 +36,14 @@ export async function createClient() {
 
 export async function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || FALLBACK_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!serviceKey) {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY is not set in environment variables. ' +
+      'This key is required for admin operations and must be configured server-side.'
+    );
+  }
 
   return createSupabaseAdminClient(url, serviceKey, {
     auth: {

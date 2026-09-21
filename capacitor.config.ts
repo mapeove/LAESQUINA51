@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.laesquina51.app',
   appName: 'La Esquina 51',
-  webDir: 'capacitor-shell',
+  webDir: '.next',
   server: {
     url: 'https://www.laesquina51.es',
     cleartext: false
@@ -16,7 +16,7 @@ const config: CapacitorConfig = {
   },
   plugins: {
     PushNotifications: {
-      presentationOptions: []
+      presentationOptions: ['badge', 'sound', 'alert']
     }
   }
 };
