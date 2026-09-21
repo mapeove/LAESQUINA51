@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
-const FALLBACK_URL = 'https://placeholder.supabase.co';
+const FALLBACK_URL = 'https://knkiqnuduzqlqnzqwcys.supabase.co';
 
 export async function createClient() {
   const cookieStore = await cookies();
