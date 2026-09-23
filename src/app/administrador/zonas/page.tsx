@@ -56,6 +56,19 @@ export default function AdminZonesPage() {
     setZones(zones.filter((z) => z.id !== id));
   };
 
+  // Mapa local zona → códigos postales conocidos
+  const ZONE_POSTAL_CODES: Record<string, string[]> = {
+    'Castilleja de la Cuesta': ['41950'],
+    'Tomares': ['41940'],
+    'Gines': ['41960'],
+    'Bormujos': ['41930'],
+    'Camas': ['41900', '41910'],
+    'Castilleja de Guzmán': ['41908'],
+    'Valencina de la Concepción': ['41907'],
+    'Santiponce': ['41970'],
+    'Aljarafe - Reparto Especial': ['41950', '41940', '41960', '41930', '41900', '41910', '41908', '41907', '41970'],
+  };
+
   if (loading) {
     return <div className="p-8 text-neutral-400">Cargando zonas de reparto...</div>;
   }
@@ -90,8 +103,14 @@ export default function AdminZonesPage() {
                 type="text"
                 value={zone.name}
                 onChange={(e) => {
+                  const newName = e.target.value;
                   const newZones = [...zones];
-                  newZones[i].name = e.target.value;
+                  newZones[i].name = newName;
+                  // Autocompletar CPs si el nombre coincide con una zona conocida
+                  const knownCodes = ZONE_POSTAL_CODES[newName];
+                  if (knownCodes) {
+                    newZones[i].postal_codes = knownCodes;
+                  }
                   setZones(newZones);
                 }}
                 className="bg-transparent font-bold text-lg text-white border-b border-dashed border-neutral-700 focus:border-yellow-500 focus:outline-none px-1"
