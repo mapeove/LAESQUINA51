@@ -32,7 +32,12 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              `script-src 'self' ${supabaseUrl}`,
+              // 'unsafe-inline' es requerido por Next.js App Router: React streaming emite
+              // <script> inline para reemplazar loading.tsx por el contenido real ($RC) y
+              // para el flight data de hidratacion (self.__next_f.push). Sin este token,
+              // el navegador bloquea esos scripts por CSP y la pagina queda en loading
+              // infinito aunque el HTML llegue completo.
+              `script-src 'self' 'unsafe-inline' ${supabaseUrl}`,
               "style-src 'self' 'unsafe-inline'",
               `img-src 'self' data: ${supabaseUrl}`,
               `connect-src 'self' ${supabaseUrl}`,
