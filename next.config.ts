@@ -38,9 +38,15 @@ const nextConfig: NextConfig = {
               // el navegador bloquea esos scripts por CSP y la pagina queda en loading
               // infinito aunque el HTML llegue completo.
               `script-src 'self' 'unsafe-inline' ${supabaseUrl}`,
-              "style-src 'self' 'unsafe-inline'",
-              `img-src 'self' data: ${supabaseUrl}`,
-              `connect-src 'self' ${supabaseUrl}`,
+              // 'unsafe-inline' necesario para Tailwind v4 y estilos de Next.js.
+              // Google Fonts se carga desde globals.css (@import url fonts.googleapis.com)
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              // Supabase storage para imágenes de productos + Google Fonts assets
+              `img-src 'self' data: blob: ${supabaseUrl} https://fonts.gstatic.com`,
+              // Supabase REST + Supabase Realtime (wss://) + Nominatim + OSRM (geocoding en checkout)
+              `connect-src 'self' ${supabaseUrl} ${supabaseUrl.replace('https://', 'wss://')} https://nominatim.openstreetmap.org https://router.project-osrm.org`,
+              // Google Fonts archivos de fuente
+              "font-src 'self' https://fonts.gstatic.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

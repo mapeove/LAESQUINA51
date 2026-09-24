@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { DeliveryZone } from '@/types';
 import {
-  COSTE_INTERNO_KM,
   COSTE_BASE_ENVIO,
   COSTE_VARIABLE_KM,
   ENVIO_MINIMO,
